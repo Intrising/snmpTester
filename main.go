@@ -3,6 +3,7 @@ package main
 import (
 	"./utils"
 	"fmt"
+	"strings"
 )
 
 const (
@@ -26,12 +27,12 @@ const (
 	snmpGetPrefix     = snmpGet + snmpUser + snmpSecurityLevel + snmpAuthentication + snmpAuthPassPhrase + snmpPrivateProtocol + snmpPrivatePassPhrase + deviceIP
 	snmpWalkPrefix    = snmpWalk + snmpUser + snmpSecurityLevel + snmpAuthentication + snmpAuthPassPhrase + snmpPrivateProtocol + snmpPrivatePassPhrase + deviceIP
 	snmpSetPrefix     = snmpSet + snmpUser + snmpSecurityLevel + snmpAuthentication + snmpAuthPassPhrase + snmpPrivateProtocol + snmpPrivatePassPhrase + deviceIP
-	snmpSetTypeString = "string"
-	snmpSetTypeInt    = "integer"
-	snmpSetTypeIpaddr = "ipaddress"
+	snmpSetTypeString = " string "
+	snmpSetTypeInt    = " integer "
+	snmpSetTypeIpaddr = " ipaddress "
 	oidPrefix         = "1.3.6.1.4.1.37072.302.2.3."
 
-	// no postfix means snmpwalk commnad
+	// no postfix means snmpget commnad
 	// all command can be read so no postfix for read-only
 	// -w  means read-write
 	// @s  means type string
@@ -49,7 +50,6 @@ const (
 	systemSerialNum      = oidPrefix + "1.8.0@i"
 
 	// Setting(2)
-	vlanWalk                 = oidPrefix + "2" // VLan (2.1)
 	vlanPortCfgNum           = oidPrefix + "2.1.1.1.1@i"
 	vlanMembers              = oidPrefix + "2.1.1.1.2@s"
 	vlanTags                 = oidPrefix + "2.1.1.1.3@s"
@@ -242,33 +242,324 @@ const (
 	upgrade             = oidPrefix + "16.2.0@s-w"
 )
 
-// TestTask is the task descirbed each snmp command and result
-type TestTask struct {
-	taskType          string // "set", "get", "walk"
-	cmd               string
-	valtype           string
-	defaultVal        interface{}
-	rawResult         string
-	rawResultafterSet string
-	testSuccess       string
+var oidMap map[string]*Task
+var testValMap map[string]string
+var taskEntry []*Task
+var stats Stats
+
+// Stats is the Statistics
+type Stats struct {
+	total  int
+	pass   int
+	failed int
 }
 
-func (t *TestTask) Init(taskType, cmd string) *TestTask {
-	testTask := new(TestTask)
-	testTask.taskType = taskType
-	testTask.cmd = cmd
+func (s *Stats) init() {
+	s.total = 0
+	s.pass = 0
+	s.failed = 0
+}
+
+func (s *Stats) AddPass() {
+	s.pass++
+	s.total++
+}
+
+func (s *Stats) AddFailed() {
+	s.failed++
+	s.total++
+}
+
+// Task is the task descirbed each snmp command and result
+type Task struct {
+	name                  string
+	taskType              string // "set", "get"
+	getCmd                string
+	setCmd                string
+	valtype               string
+	defaultVal            string
+	rawResult             string
+	rawResultafterSet     string
+	rawResultAfterDefault string
+	testSuccess           string
+}
+
+func parseTaskTypeFromCmd(oid string) string {
+	if strings.Contains(oid, "-w") {
+		return "set"
+	} else {
+		return "get"
+	}
+}
+
+func parseValTypeFromCmd(oid string) string {
+	if strings.Contains("@i", oid) && !strings.Contains("@ip", oid) {
+		return snmpSetTypeInt
+	} else if strings.Contains("@s", oid) {
+		return snmpSetTypeString
+	} else if strings.Contains("@ip", oid) {
+		return snmpSetTypeIpaddr
+	}
+	return "sthing wrong"
+}
+
+func rmPostFix(oid string) string {
+	return strings.Split(oid, "@")[0]
+}
+
+func (t *Task) Init(taskName, oid string) {
+	t.name = taskName
+	t.taskType = parseTaskTypeFromCmd(oid)
+	t.valtype = parseValTypeFromCmd(oid)
+	oid = rmPostFix(oid)
+	t.getCmd = snmpGetPrefix + oid
+	// We need to test all oid by get, and some oid has the read-write access, so we store the set cmd in task.setCmd
+	//
+	if t.taskType == "set" {
+		t.setCmd = snmpSetPrefix + oid + t.valtype + testValMap[t.valtype]
+	}
+}
+
+func (t *Task) Exec() {
+	_, result := utils.ShellExec(t.getCmd)
+	t.rawResult = result
+	t.handleFirstGet()
+	t.printResult()
+
+}
+
+func probe(mainString, subString string) bool {
+	return strings.Contains(mainString, subString)
+}
+
+func (t *Task) handleFirstGet() {
+	// fmt.Println("handleRawVal")
+	// fmt.Println("Raw Val is => ", t.rawResult)
+	if probe(t.rawResult, "No Such Instance currently exists at this OID") {
+		t.testSuccess = cross
+		stats.AddFailed()
+	} else if probe(t.rawResult, "STRING:") {
+		val := strings.Split(t.rawResult, "STRING: ")[1]
+		val = strings.Replace(val, "\"", "", -1)
+		t.defaultVal = val
+		t.testSuccess = check
+		stats.AddPass()
+	} else if probe(t.rawResult, "INTEGER:") {
+		val := strings.Split(t.rawResult, "INTEGER: ")[1]
+		t.defaultVal = val
+		t.testSuccess = check
+		stats.AddPass()
+	}
+}
+
+func (t *Task) printResult() {
+	fmt.Println("\n")
+	fmt.Println("Name: ", t.name)
+	fmt.Println("GetCmd: ", t.getCmd)
+	fmt.Println("GET "+t.name+" ===== >", t.defaultVal)
+	fmt.Println("Test pass: ", t.testSuccess)
+}
+
+func genTask(name, oid string) *Task {
+	t := new(Task)
+	t.Init(name, oid)
 	return t
 }
 
-func (t *TestTask) Exec() {
-	// if t.taskType == "get" {
-	// 	_, result := utils.ShellExec(snmpGetPrefix + t.cmd)
-	// 	t.result = result
-	// } else if t.taskType == "set" {
-	// 	_, b4 := utils.ShellExec(snmpGetPrefix + t.cmd)
-	// } else if t.taskType == "walk" {
-	//
-	// }
+func init() {
+	stats.init()
+
+	testValMap = make(map[string]string)
+	testValMap["string"] = "testWalter"
+	testValMap["integer"] = "20"
+	testValMap["ipaddress"] = "192.168.1.1"
+
+	// taskEntry = append(taskEntry, genTask(oid))
+	taskEntry = append(taskEntry, genTask("systemName", systemName))
+	taskEntry = append(taskEntry, genTask("systemLocation", systemLocation))
+	taskEntry = append(taskEntry, genTask("systemContact", systemContact))
+	taskEntry = append(taskEntry, genTask("systemDescr", systemDescr))
+	taskEntry = append(taskEntry, genTask("systemFwVersion", systemFwVersion))
+	taskEntry = append(taskEntry, genTask("systemMacaddress", systemMacaddress))
+	taskEntry = append(taskEntry, genTask("systemAutoLogoutTime", systemAutoLogoutTime))
+	taskEntry = append(taskEntry, genTask("systemSerialNum", systemSerialNum))
+	taskEntry = append(taskEntry, genTask("vlanPortCfgNum", vlanPortCfgNum))
+	taskEntry = append(taskEntry, genTask("vlanMembers", vlanMembers))
+	taskEntry = append(taskEntry, genTask("vlanTags", vlanTags))
+	taskEntry = append(taskEntry, genTask("pvidCfgNum", pvidCfgNum))
+	taskEntry = append(taskEntry, genTask("vlanPvid", vlanPvid))
+	taskEntry = append(taskEntry, genTask("vlanFrameType", vlanFrameType))
+	taskEntry = append(taskEntry, genTask("mvrCfgNum", mvrCfgNum))
+	taskEntry = append(taskEntry, genTask("mvrCfgVid", mvrCfgVid))
+	taskEntry = append(taskEntry, genTask("mvrIPAddr", mvrIPAddr))
+	taskEntry = append(taskEntry, genTask("mvrMemnters", mvrMemnters))
+	taskEntry = append(taskEntry, genTask("igmpEnableQuerier", igmpEnableQuerier))
+	taskEntry = append(taskEntry, genTask("igmpQuerierVersion", igmpQuerierVersion))
+	taskEntry = append(taskEntry, genTask("igmpEnableSnooping", igmpEnableSnooping))
+	taskEntry = append(taskEntry, genTask("igmpEnableFloodWellKnown", igmpEnableFloodWellKnown))
+	taskEntry = append(taskEntry, genTask("igmpPortNum", igmpPortNum))
+	taskEntry = append(taskEntry, genTask("igmpRouterStatus", igmpRouterStatus))
+	taskEntry = append(taskEntry, genTask("igmpFastLeaveStatus", igmpFastLeaveStatus))
+	taskEntry = append(taskEntry, genTask("igmpVidNum", igmpVidNum))
+	taskEntry = append(taskEntry, genTask("igmpStatusQuerier", igmpStatusQuerier))
+	taskEntry = append(taskEntry, genTask("igmpQuerierTx", igmpQuerierTx))
+	taskEntry = append(taskEntry, genTask("igmpQuerierRx", igmpQuerierRx))
+	taskEntry = append(taskEntry, genTask("igmpV1Rx", igmpV1Rx))
+	taskEntry = append(taskEntry, genTask("igmpV2Rx", igmpV2Rx))
+	taskEntry = append(taskEntry, genTask("igmpV3Rx", igmpV3Rx))
+	taskEntry = append(taskEntry, genTask("igmpV2Leave", igmpV2Leave))
+	taskEntry = append(taskEntry, genTask("igmpEntriesEntryIndex", igmpEntriesEntryIndex))
+	taskEntry = append(taskEntry, genTask("igmpEntriesEntryIPAddr", igmpEntriesEntryIPAddr))
+	taskEntry = append(taskEntry, genTask("igmpEntriesEntryVID", igmpEntriesEntryVID))
+	taskEntry = append(taskEntry, genTask("igmpEntriesEntryMembers", igmpEntriesEntryMembers))
+	taskEntry = append(taskEntry, genTask("lldpPortNum", lldpPortNum))
+	taskEntry = append(taskEntry, genTask("lldpInfoContent", lldpInfoContent))
+	taskEntry = append(taskEntry, genTask("faultAlarmPowerCfgNum", faultAlarmPowerCfgNum))
+	taskEntry = append(taskEntry, genTask("faultAlarmPowerStatus", faultAlarmPowerStatus))
+	taskEntry = append(taskEntry, genTask("faultAlarmPortCfgNum", faultAlarmPortCfgNum))
+	taskEntry = append(taskEntry, genTask("faultAlarmPortLinkStatus", faultAlarmPortLinkStatus))
+	taskEntry = append(taskEntry, genTask("eventDDMEnabled", eventDDMEnabled))
+	taskEntry = append(taskEntry, genTask("eventDDMTemperatureLower", eventDDMTemperatureLower))
+	taskEntry = append(taskEntry, genTask("eventDDMTemperatureUpper", eventDDMTemperatureUpper))
+	taskEntry = append(taskEntry, genTask("eventDDMVoltageLower", eventDDMVoltageLower))
+	taskEntry = append(taskEntry, genTask("eventDDMVoltageUpper", eventDDMVoltageUpper))
+	taskEntry = append(taskEntry, genTask("eventDDMTxBiasLower", eventDDMTxBiasLower))
+	taskEntry = append(taskEntry, genTask("eventDDMTTxBiasUpper", eventDDMTTxBiasUpper))
+	taskEntry = append(taskEntry, genTask("eventDDMTxPowerLower", eventDDMTxPowerLower))
+	taskEntry = append(taskEntry, genTask("eventDDMTxPowerUpper", eventDDMTxPowerUpper))
+	taskEntry = append(taskEntry, genTask("eventDDMRxPowerLower", eventDDMRxPowerLower))
+	taskEntry = append(taskEntry, genTask("eventDDMRxPowerUpper", eventDDMRxPowerUpper))
+	taskEntry = append(taskEntry, genTask("eventMonitorEnabled", eventMonitorEnabled))
+	taskEntry = append(taskEntry, genTask("eventMonitorTemperatureLower", eventMonitorTemperatureLower))
+	taskEntry = append(taskEntry, genTask("eventMonitorTemperatureUpper", eventMonitorTemperatureUpper))
+	taskEntry = append(taskEntry, genTask("eventMonitorVoltageLower", eventMonitorVoltageLower))
+	taskEntry = append(taskEntry, genTask("eventMonitorVoltageUpper", eventMonitorVoltageUpper))
+	taskEntry = append(taskEntry, genTask("eventMonitorCurrentLower", eventMonitorCurrentLower))
+	taskEntry = append(taskEntry, genTask("eventMonitorCurrentUpper", eventMonitorCurrentUpper))
+	taskEntry = append(taskEntry, genTask("eventMonitorPowerLower", eventMonitorPowerLower))
+	taskEntry = append(taskEntry, genTask("eventMonitorPowerUpper", eventMonitorPowerUpper))
+	taskEntry = append(taskEntry, genTask("eventPOEAPortCfgNum", eventPOEAPortCfgNum))
+	taskEntry = append(taskEntry, genTask("eventPOEAPingEnabled", eventPOEAPingEnabled))
+	taskEntry = append(taskEntry, genTask("eventPOEAPingIPAddr", eventPOEAPingIPAddr))
+	taskEntry = append(taskEntry, genTask("eventPOEAPingInterval", eventPOEAPingInterval))
+	taskEntry = append(taskEntry, genTask("eventPOEAPingRetry", eventPOEAPingRetry))
+	taskEntry = append(taskEntry, genTask("eventPOEAPingReboot", eventPOEAPingReboot))
+	taskEntry = append(taskEntry, genTask("eventPOEAPingFailAction", eventPOEAPingFailAction))
+	taskEntry = append(taskEntry, genTask("localLogEnable", localLogEnable))
+	taskEntry = append(taskEntry, genTask("remoteSystemLogCfgNum", remoteSystemLogCfgNum))
+	taskEntry = append(taskEntry, genTask("remoteSystemLogHost", remoteSystemLogHost))
+	taskEntry = append(taskEntry, genTask("remoteSystemLogTag", remoteSystemLogTag))
+	taskEntry = append(taskEntry, genTask("remoteSystemLogFacility", remoteSystemLogFacility))
+	taskEntry = append(taskEntry, genTask("remoteSystemLogHostName", remoteSystemLogHostName))
+	taskEntry = append(taskEntry, genTask("emailEnable", emailEnable))
+	taskEntry = append(taskEntry, genTask("emailServerUser", emailServerUser))
+	taskEntry = append(taskEntry, genTask("emailServerPassword", emailServerPassword))
+	taskEntry = append(taskEntry, genTask("emailServerHost", emailServerHost))
+	taskEntry = append(taskEntry, genTask("emailServerSSLEnable", emailServerSSLEnable))
+	taskEntry = append(taskEntry, genTask("emailSender", emailSender))
+	taskEntry = append(taskEntry, genTask("emailSubject", emailSubject))
+	taskEntry = append(taskEntry, genTask("emailCloudEnable", emailCloudEnable))
+	taskEntry = append(taskEntry, genTask("emailReceiverCfgNum", emailReceiverCfgNum))
+	taskEntry = append(taskEntry, genTask("emailReceiverHost", emailReceiverHost))
+	taskEntry = append(taskEntry, genTask("smsEnable", smsEnable))
+	taskEntry = append(taskEntry, genTask("smsUser", smsUser))
+	taskEntry = append(taskEntry, genTask("smsPassword", smsPassword))
+	taskEntry = append(taskEntry, genTask("smsSenderText", smsSenderText))
+	taskEntry = append(taskEntry, genTask("smsReceiverCfgNum", smsReceiverCfgNum))
+	taskEntry = append(taskEntry, genTask("smsReceiverPhone", smsReceiverPhone))
+	taskEntry = append(taskEntry, genTask("snmpResponseLocale", snmpResponseLocale))
+	taskEntry = append(taskEntry, genTask("snmpCommunityCfgNum", snmpCommunityCfgNum))
+	taskEntry = append(taskEntry, genTask("snmpCommunityCfgString", snmpCommunityCfgString))
+	taskEntry = append(taskEntry, genTask("snmpCommunityCfgReadOnly", snmpCommunityCfgReadOnly))
+	taskEntry = append(taskEntry, genTask("snmpTrapCfgNum", snmpTrapCfgNum))
+	taskEntry = append(taskEntry, genTask("snmpTrapCfgCommunity", snmpTrapCfgCommunity))
+	taskEntry = append(taskEntry, genTask("snmpTrapCfgIPAddress", snmpTrapCfgIPAddress))
+	taskEntry = append(taskEntry, genTask("snmpTrapCfgVersion", snmpTrapCfgVersion))
+	taskEntry = append(taskEntry, genTask("snmpV3UserCfgNum", snmpV3UserCfgNum))
+	taskEntry = append(taskEntry, genTask("snmpV3UserCfgName", snmpV3UserCfgName))
+	taskEntry = append(taskEntry, genTask("snmpV3UserCfgSecurityLevel", snmpV3UserCfgSecurityLevel))
+	taskEntry = append(taskEntry, genTask("snmpV3UserCfgAuthProtocal", snmpV3UserCfgAuthProtocal))
+	taskEntry = append(taskEntry, genTask("snmpV3UserCfgAuthPassword", snmpV3UserCfgAuthPassword))
+	taskEntry = append(taskEntry, genTask("snmpV3UserCfgPrivProtocal", snmpV3UserCfgPrivProtocal))
+	taskEntry = append(taskEntry, genTask("snmpV3UserCfgPrivPassword", snmpV3UserCfgPrivPassword))
+	taskEntry = append(taskEntry, genTask("doutCfgNum", doutCfgNum))
+	taskEntry = append(taskEntry, genTask("doutCfgEnable", doutCfgEnable))
+	taskEntry = append(taskEntry, genTask("doutCfgAction", doutCfgAction))
+	taskEntry = append(taskEntry, genTask("deviceBootEvent", deviceBootEvent))
+	taskEntry = append(taskEntry, genTask("authenticationFailureEvent", authenticationFailureEvent))
+	taskEntry = append(taskEntry, genTask("authenticationSuccessEvent", authenticationSuccessEvent))
+	taskEntry = append(taskEntry, genTask("deviceDDMEvent", deviceDDMEvent))
+	taskEntry = append(taskEntry, genTask("devicePOEEvent", devicePOEEvent))
+	taskEntry = append(taskEntry, genTask("devicePOEBEvent", devicePOEBEvent))
+	taskEntry = append(taskEntry, genTask("ringTopologyChangeEvent", ringTopologyChangeEvent))
+	taskEntry = append(taskEntry, genTask("envMonitorEvent", envMonitorEvent))
+	taskEntry = append(taskEntry, genTask("eventPortNumber", eventPortNumber))
+	taskEntry = append(taskEntry, genTask("eventPortEventLog", eventPortEventLog))
+	taskEntry = append(taskEntry, genTask("eventPortEventsms", eventPortEventsms))
+	taskEntry = append(taskEntry, genTask("eventPortEventSMTP", eventPortEventSMTP))
+	taskEntry = append(taskEntry, genTask("eventPortEventsnmpTRAP", eventPortEventsnmpTRAP))
+	taskEntry = append(taskEntry, genTask("eventPortEventdout1", eventPortEventdout1))
+	taskEntry = append(taskEntry, genTask("eventPortEventdout2", eventPortEventdout2))
+	taskEntry = append(taskEntry, genTask("eventPowerNumber", eventPowerNumber))
+	taskEntry = append(taskEntry, genTask("eventPowerEventLog", eventPowerEventLog))
+	taskEntry = append(taskEntry, genTask("eventPowerEventsms", eventPowerEventsms))
+	taskEntry = append(taskEntry, genTask("eventPowerEventSMTP", eventPowerEventSMTP))
+	taskEntry = append(taskEntry, genTask("eventPowerEventsnmpTRAP", eventPowerEventsnmpTRAP))
+	taskEntry = append(taskEntry, genTask("eventPowerEventdout1", eventPowerEventdout1))
+	taskEntry = append(taskEntry, genTask("eventPowerEventdout2", eventPowerEventdout2))
+	taskEntry = append(taskEntry, genTask("eventDiNumber", eventDiNumber))
+	taskEntry = append(taskEntry, genTask("eventDiEventLog", eventDiEventLog))
+	taskEntry = append(taskEntry, genTask("eventDiEventsms", eventDiEventsms))
+	taskEntry = append(taskEntry, genTask("eventDiEventSMTP", eventDiEventSMTP))
+	taskEntry = append(taskEntry, genTask("eventDiEventsnmpTRAP", eventDiEventsnmpTRAP))
+	taskEntry = append(taskEntry, genTask("eventDiEventdout1", eventDiEventdout1))
+	taskEntry = append(taskEntry, genTask("eventDiEventdout2", eventDiEventdout2))
+	taskEntry = append(taskEntry, genTask("envVoltage", envVoltage))
+	taskEntry = append(taskEntry, genTask("envCurrent", envCurrent))
+	taskEntry = append(taskEntry, genTask("envWalt", envWalt))
+	taskEntry = append(taskEntry, genTask("envTemperature", envTemperature))
+	taskEntry = append(taskEntry, genTask("ddmPortNumber", ddmPortNumber))
+	taskEntry = append(taskEntry, genTask("ddmTemperatureHighAlarm", ddmTemperatureHighAlarm))
+	taskEntry = append(taskEntry, genTask("ddmTemperatureHighWarning", ddmTemperatureHighWarning))
+	taskEntry = append(taskEntry, genTask("ddmTemperatureCurrentValue", ddmTemperatureCurrentValue))
+	taskEntry = append(taskEntry, genTask("ddmTemperatureLowWarning", ddmTemperatureLowWarning))
+	taskEntry = append(taskEntry, genTask("ddmTemperatureLowAlarm", ddmTemperatureLowAlarm))
+	taskEntry = append(taskEntry, genTask("ddmVccHighAlarm", ddmVccHighAlarm))
+	taskEntry = append(taskEntry, genTask("ddmVccHighWarning", ddmVccHighWarning))
+	taskEntry = append(taskEntry, genTask("ddmVccCurrentValue", ddmVccCurrentValue))
+	taskEntry = append(taskEntry, genTask("ddmVccLowWarning", ddmVccLowWarning))
+	taskEntry = append(taskEntry, genTask("ddmVccLowAlarm", ddmVccLowAlarm))
+	taskEntry = append(taskEntry, genTask("ddmBiasHighAlarm", ddmBiasHighAlarm))
+	taskEntry = append(taskEntry, genTask("ddmBiasHighWarning", ddmBiasHighWarning))
+	taskEntry = append(taskEntry, genTask("ddmBiasCurrentValue", ddmBiasCurrentValue))
+	taskEntry = append(taskEntry, genTask("ddmBiasLowWarning", ddmBiasLowWarning))
+	taskEntry = append(taskEntry, genTask("ddmBiasLowAlarm", ddmBiasLowAlarm))
+	taskEntry = append(taskEntry, genTask("ddmTxPowerHighAlarm", ddmTxPowerHighAlarm))
+	taskEntry = append(taskEntry, genTask("ddmTxPowerHighWarning", ddmTxPowerHighWarning))
+	taskEntry = append(taskEntry, genTask("ddmTxPowerCurrentValue", ddmTxPowerCurrentValue))
+	taskEntry = append(taskEntry, genTask("ddmTxPowerLowWarning", ddmTxPowerLowWarning))
+	taskEntry = append(taskEntry, genTask("ddmTxPowerLowAlarm", ddmTxPowerLowAlarm))
+	taskEntry = append(taskEntry, genTask("ddmRxPowerHighAlarm", ddmRxPowerHighAlarm))
+	taskEntry = append(taskEntry, genTask("ddmRxPowerHighWarning", ddmRxPowerHighWarning))
+	taskEntry = append(taskEntry, genTask("ddmRxPowerCurrentValue", ddmRxPowerCurrentValue))
+	taskEntry = append(taskEntry, genTask("ddmRxPowerLowWarning", ddmRxPowerLowWarning))
+	taskEntry = append(taskEntry, genTask("ddmRxPowerLowAlarm", ddmRxPowerLowAlarm))
+	taskEntry = append(taskEntry, genTask("monitorPowerNumber", monitorPowerNumber))
+	taskEntry = append(taskEntry, genTask("monitorPowerStatus", monitorPowerStatus))
+	taskEntry = append(taskEntry, genTask("monitorPoEPortCfgNum", monitorPoEPortCfgNum))
+	taskEntry = append(taskEntry, genTask("monitorPoEPortStatus", monitorPoEPortStatus))
+	taskEntry = append(taskEntry, genTask("monitorPoEPortClass", monitorPoEPortClass))
+	taskEntry = append(taskEntry, genTask("monitorPoEPortPowerConsumption", monitorPoEPortPowerConsumption))
+	taskEntry = append(taskEntry, genTask("monitorPoEPortCurrent", monitorPoEPortCurrent))
+	taskEntry = append(taskEntry, genTask("monitorPoEPortVoltage", monitorPoEPortVoltage))
+	taskEntry = append(taskEntry, genTask("monitorPoEPortTemperature", monitorPoEPortTemperature))
+	taskEntry = append(taskEntry, genTask("cpuLoadingMonitor", cpuLoadingMonitor))
+	taskEntry = append(taskEntry, genTask("saveCfgMgtAction", saveCfgMgtAction))
+	taskEntry = append(taskEntry, genTask("factoryDefaultAction", factoryDefaultAction))
+	taskEntry = append(taskEntry, genTask("systemRebootAction", systemRebootAction))
+	taskEntry = append(taskEntry, genTask("importConfiguration", importConfiguration))
+	taskEntry = append(taskEntry, genTask("upgrade", upgrade))
+
 }
 
 func main() {
@@ -276,10 +567,18 @@ func main() {
 		fmt.Println("test done")
 	}()
 
-	fmt.Println("command is", snmpSetPrefix+systemContact)
-
-	_, b4 := utils.ShellExec(snmpGetPrefix + systemContact)
-	_, setResult := utils.ShellExec(snmpSetPrefix + systemContact)
-	fmt.Println("result is " + b4)
-	fmt.Println("result is " + setResult)
+	// fmt.Println("get command is", snmpGetPrefix+rmPostFix(systemContact))
+	// _, b4 := utils.ShellExec(snmpGetPrefix + rmPostFix(systemContact))
+	// fmt.Println("set command is", snmpSetPrefix+rmPostFix(systemContact))
+	// _, setResult := utils.ShellExec(snmpSetPrefix + rmPostFix(systemContact) + " string " + "helloWalter")
+	// fmt.Println("result is " + b4)
+	// fmt.Println("result is " + setResult)
+	for _, val := range taskEntry {
+		fmt.Println(val.name)
+		val.Exec()
+	}
+	fmt.Println("================================================")
+	fmt.Println("Pass:   ", stats.pass)
+	fmt.Println("Failed: ", stats.failed)
+	fmt.Println("Total:  ", stats.total)
 }
