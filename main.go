@@ -4,12 +4,19 @@ import (
 	"./utils"
 	"fmt"
 	"strings"
+	// "time"
 )
 
 const (
 	check            = "\u2714"
 	cross            = "\u274c"
 	nothingInThisOID = "No Such Instance currently exists at this OID"
+	portAmount       = 20
+
+	typeGet     = 0
+	typeWalk    = 1
+	typeSet     = 2
+	typeWalkSet = 4
 
 	snmpGet  = "snmpget -v 3 "
 	snmpWalk = "snmpwalk -v 3 "
@@ -23,6 +30,7 @@ const (
 	snmpPrivatePassPhrase = "-X 123456789 "
 
 	deviceIP = "192.168.15.10 "
+	// deviceIP = "192.168.16.140 "
 
 	snmpGetPrefix     = snmpGet + snmpUser + snmpSecurityLevel + snmpAuthentication + snmpAuthPassPhrase + snmpPrivateProtocol + snmpPrivatePassPhrase + deviceIP
 	snmpWalkPrefix    = snmpWalk + snmpUser + snmpSecurityLevel + snmpAuthentication + snmpAuthPassPhrase + snmpPrivateProtocol + snmpPrivatePassPhrase + deviceIP
@@ -34,212 +42,218 @@ const (
 
 	// no postfix means snmpget commnad
 	// all command can be read so no postfix for read-only
-	// -w  means read-write
-	// @s  means type string
-	// @i  means type integer
-	// @ip means type ipaddress
+	// -s   means read-write
+	// -w-s means use cmd walk and read-write
+	// @s   means type string
+	// @i   means type integer
+	// @ip  means type ipaddress
+	// -ps  means ps
+	// -m:  marks the known failed type:
+	//                                  1 =>  need to set value to the device
+	//                                  2 =>  Spec issue
+	//                                  3 =>  snmp program issue
 
 	// SYSTEM (1)
-	systemName           = oidPrefix + "1.1.0@s-w"
-	systemLocation       = oidPrefix + "1.2.0@s-w"
-	systemContact        = oidPrefix + "1.3.0@s-w"
-	systemDescr          = oidPrefix + "1.4.0@s-w"
+	systemName           = oidPrefix + "1.1.0@s-s"
+	systemLocation       = oidPrefix + "1.2.0@s-s"
+	systemContact        = oidPrefix + "1.3.0@s-s"
+	systemDescr          = oidPrefix + "1.4.0@s-s"
 	systemFwVersion      = oidPrefix + "1.5.0@s"
 	systemMacaddress     = oidPrefix + "1.6.0@s"
-	systemAutoLogoutTime = oidPrefix + "1.7.0@i-w"
+	systemAutoLogoutTime = oidPrefix + "1.7.0@i-s"
 	systemSerialNum      = oidPrefix + "1.8.0@i"
 
 	// Setting(2)
-	vlanPortCfgNum           = oidPrefix + "2.1.1.1.1@i"
-	vlanMembers              = oidPrefix + "2.1.1.1.2@s"
-	vlanTags                 = oidPrefix + "2.1.1.1.3@s"
-	pvidCfgNum               = oidPrefix + "2.1.2.1.1@i"
-	vlanPvid                 = oidPrefix + "2.1.2.1.2@i-w"
-	vlanFrameType            = oidPrefix + "2.1.2.1.3@i-w"
-	mvrCfgNum                = oidPrefix + "2.2.1.1.1@i" // Mvr (2.2)
-	mvrCfgVid                = oidPrefix + "2.2.1.1.2@i"
-	mvrIPAddr                = oidPrefix + "2.2.1.1.3@ip"
-	mvrMemnters              = oidPrefix + "2.2.1.1.4@s"
-	igmpEnableQuerier        = oidPrefix + "2.3.1.0@s-w" // Igmp (2.3)
-	igmpQuerierVersion       = oidPrefix + "2.3.2.0@s-w"
-	igmpEnableSnooping       = oidPrefix + "2.3.3.0@s-w"
-	igmpEnableFloodWellKnown = oidPrefix + "2.3.4.0@i-w"
-	igmpPortNum              = oidPrefix + "2.3.5.1.1@i" // IgmpRouterTable (2.3.5)
-	igmpRouterStatus         = oidPrefix + "2.3.5.1.2@i-w"
-	igmpFastLeaveStatus      = oidPrefix + "2.3.5.1.3@i-w"
-	igmpVidNum               = oidPrefix + "2.3.6.1.1@i" // IgmpStatisticsTable (2.3.6)
-	igmpStatusQuerier        = oidPrefix + "2.3.6.1.2@s"
-	igmpQuerierTx            = oidPrefix + "2.3.6.1.3@i"
-	igmpQuerierRx            = oidPrefix + "2.3.6.1.4@i"
-	igmpV1Rx                 = oidPrefix + "2.3.6.1.5@i"
-	igmpV2Rx                 = oidPrefix + "2.3.6.1.6@i"
-	igmpV3Rx                 = oidPrefix + "2.3.6.1.7@i"
-	igmpV2Leave              = oidPrefix + "2.3.6.1.8@i"
-	igmpEntriesEntryIndex    = oidPrefix + "2.3.7.1.1@i" // IgmpEntriesTable (2.3.7)
-	igmpEntriesEntryIPAddr   = oidPrefix + "2.3.7.1.2@ip"
-	igmpEntriesEntryVID      = oidPrefix + "2.3.7.1.3@i"
-	igmpEntriesEntryMembers  = oidPrefix + "2.3.7.1.4@s"
+	vlanPortCfgNum           = oidPrefix + "2.1.1.1.1@i-w"
+	vlanMembers              = oidPrefix + "2.1.1.1.2@s-w"
+	vlanTags                 = oidPrefix + "2.1.1.1.3@s-w-m:1"
+	pvidCfgNum               = oidPrefix + "2.1.2.1.1@i-w"
+	vlanPvid                 = oidPrefix + "2.1.2.1.2@i-w-s"
+	vlanFrameType            = oidPrefix + "2.1.2.1.3@i-w-s"
+	mvrCfgNum                = oidPrefix + "2.2.1.1.1@i-w-m:2" // Mvr (2.2)
+	mvrCfgVid                = oidPrefix + "2.2.1.1.2@i-w-m:3"
+	mvrIPAddr                = oidPrefix + "2.2.1.1.3@s-w"
+	mvrMembers               = oidPrefix + "2.2.1.1.4@s-w"
+	igmpEnableQuerier        = oidPrefix + "2.3.1.0@i-s" // Igmp (2.3)
+	igmpQuerierVersion       = oidPrefix + "2.3.2.0@i-s"
+	igmpEnableSnooping       = oidPrefix + "2.3.3.0@i-s"
+	igmpEnableFloodWellKnown = oidPrefix + "2.3.4.0@i-s"
+	igmpPortNum              = oidPrefix + "2.3.5.1.1@i-w" // IgmpRouterTable (2.3.5)
+	igmpRouterStatus         = oidPrefix + "2.3.5.1.2@i-w-s"
+	igmpFastLeaveStatus      = oidPrefix + "2.3.5.1.3@i-w-s"
+	igmpVidNum               = oidPrefix + "2.3.6.1.1@i-w" // IgmpStatisticsTable (2.3.6)
+	igmpStatusQuerier        = oidPrefix + "2.3.6.1.2@s-w"
+	igmpQuerierTx            = oidPrefix + "2.3.6.1.3@i-w"
+	igmpQuerierRx            = oidPrefix + "2.3.6.1.4@i-w"
+	igmpV1Rx                 = oidPrefix + "2.3.6.1.5@i-w"
+	igmpV2Rx                 = oidPrefix + "2.3.6.1.6@i-w"
+	igmpV3Rx                 = oidPrefix + "2.3.6.1.7@i-w"
+	igmpV2Leave              = oidPrefix + "2.3.6.1.8@i-w"
+	igmpEntriesEntryIndex    = oidPrefix + "2.3.7.1.1@s-w-m:3" // IgmpEntriesTable (2.3.7)
+	igmpEntriesEntryIPAddr   = oidPrefix + "2.3.7.1.2@s-w-m:3"
+	igmpEntriesEntryVID      = oidPrefix + "2.3.7.1.3@i-w-m:3"
+	igmpEntriesEntryMembers  = oidPrefix + "2.3.7.1.4@s-w-m:3"
 
 	// Status (3)
-	lldpPortNum     = oidPrefix + "3.1.1.1.1@i" // LLDPInfo (3.1)
-	lldpInfoContent = oidPrefix + "3.1.1.1.2@i"
+	lldpPortNum     = oidPrefix + "3.1.1.1.1@i-w" // LLDPInfo (3.1)
+	lldpInfoContent = oidPrefix + "3.1.1.1.2@s-w-m:1"
 
 	// Warning (11)
-	faultAlarmPowerCfgNum        = oidPrefix + "11.1.1.1.1@i" // FaultAlarm (11.1)
-	faultAlarmPowerStatus        = oidPrefix + "11.1.1.1.2@i-w"
-	faultAlarmPortCfgNum         = oidPrefix + "11.1.2.1.1@i"
-	faultAlarmPortLinkStatus     = oidPrefix + "11.1.2.1.2@i-w"
-	eventDDMEnabled              = oidPrefix + "11.2.1.1.0@i-w" // EventDDMEnabled (11.2.1)
-	eventDDMTemperatureLower     = oidPrefix + "11.2.1.2.0@s-w"
-	eventDDMTemperatureUpper     = oidPrefix + "11.2.1.3.0@s-w"
-	eventDDMVoltageLower         = oidPrefix + "11.2.1.4.0@s-w"
-	eventDDMVoltageUpper         = oidPrefix + "11.2.1.5.0@s-w"
-	eventDDMTxBiasLower          = oidPrefix + "11.2.1.6.0@s-w"
-	eventDDMTTxBiasUpper         = oidPrefix + "11.2.1.7.0@s-w"
-	eventDDMTxPowerLower         = oidPrefix + "11.2.1.8.0@s-w"
-	eventDDMTxPowerUpper         = oidPrefix + "11.2.1.9.0@s-w"
-	eventDDMRxPowerLower         = oidPrefix + "11.2.1.10.0@s-w"
-	eventDDMRxPowerUpper         = oidPrefix + "11.2.1.11.0@s-w"
-	eventMonitorEnabled          = oidPrefix + "11.2.2.1.0@i-w" // EventMonitor (11.2.1)
-	eventMonitorTemperatureLower = oidPrefix + "11.2.2.2.0@s-w"
-	eventMonitorTemperatureUpper = oidPrefix + "11.2.2.3.0@s-w"
-	eventMonitorVoltageLower     = oidPrefix + "11.2.2.4.0@s-w"
-	eventMonitorVoltageUpper     = oidPrefix + "11.2.2.5.0@s-w"
-	eventMonitorCurrentLower     = oidPrefix + "11.2.2.6.0@s-w"
-	eventMonitorCurrentUpper     = oidPrefix + "11.2.2.7.0@s-w"
-	eventMonitorPowerLower       = oidPrefix + "11.2.2.8.0@s-w"
-	eventMonitorPowerUpper       = oidPrefix + "11.2.2.9.0@s-w"
-	eventPOEAPortCfgNum          = oidPrefix + "11.2.3.1.1.1@i" // EventPOEA (11.2.3)
-	eventPOEAPingEnabled         = oidPrefix + "11.2.3.1.1.2@i-w"
-	eventPOEAPingIPAddr          = oidPrefix + "11.2.3.1.1.3@ip-w"
-	eventPOEAPingInterval        = oidPrefix + "11.2.3.1.1.4@i-w"
-	eventPOEAPingRetry           = oidPrefix + "11.2.3.1.1.5@i-w"
-	eventPOEAPingReboot          = oidPrefix + "11.2.3.1.1.6@i-w"
-	eventPOEAPingFailAction      = oidPrefix + "11.2.3.1.1.7@i-w"
-	localLogEnable               = oidPrefix + "11.3.1.1.0@i-w" // ActionConfiguration (11.3)
-	remoteSystemLogCfgNum        = oidPrefix + "11.3.2.1.1.1@i" // RemoteSystemLog (11.3.2)
-	remoteSystemLogHost          = oidPrefix + "11.3.2.1.1.2@ip"
-	remoteSystemLogTag           = oidPrefix + "11.3.2.1.1.3@s"
-	remoteSystemLogFacility      = oidPrefix + "11.3.2.1.1.4@s"
-	remoteSystemLogHostName      = oidPrefix + "11.3.2.1.1.5@s"
-	emailEnable                  = oidPrefix + "11.3.3.1.0@i-w"   // email (11.3.3.1)
-	emailServerUser              = oidPrefix + "11.3.3.2.1.0@s-w" // emailServer (11.3.3.2)
-	emailServerPassword          = oidPrefix + "11.3.3.2.2.0@s-w"
-	emailServerHost              = oidPrefix + "11.3.3.2.3.0@s-w"
-	emailServerSSLEnable         = oidPrefix + "11.3.3.2.4.0@i-w"
-	emailSender                  = oidPrefix + "11.3.3.3.0@s-w"
-	emailSubject                 = oidPrefix + "11.3.3.4.0@-w"
-	emailCloudEnable             = oidPrefix + "11.3.3.5.0@i-w"
-	emailReceiverCfgNum          = oidPrefix + "11.3.3.6.1.1@i"
-	emailReceiverHost            = oidPrefix + "11.3.3.6.1.2@s"
-	smsEnable                    = oidPrefix + "11.3.4.1.0@i-w" // SMS (11.3.4)
-	smsUser                      = oidPrefix + "11.3.4.2.0@s-w"
-	smsPassword                  = oidPrefix + "11.3.4.3.0@s-w"
-	smsSenderText                = oidPrefix + "11.3.4.4.0@s-w"
-	smsReceiverCfgNum            = oidPrefix + "11.3.4.5.1.1@i"
-	smsReceiverPhone             = oidPrefix + "11.3.4.5.1.2@s"
-	snmpResponseLocale           = oidPrefix + "11.3.5.1.1.0@i-w" // Snmp (11.3.5)
-	snmpCommunityCfgNum          = oidPrefix + "11.3.5.1.2.1.1@i"
-	snmpCommunityCfgString       = oidPrefix + "11.3.5.1.2.1.2@s"
-	snmpCommunityCfgReadOnly     = oidPrefix + "11.3.5.1.2.1.3@i"
-	snmpTrapCfgNum               = oidPrefix + "11.3.5.2.1.1.1@i" // Trap (11.3.5.2)
-	snmpTrapCfgCommunity         = oidPrefix + "11.3.5.2.1.1.2@s"
-	snmpTrapCfgIPAddress         = oidPrefix + "11.3.5.2.1.1.3@ip"
-	snmpTrapCfgVersion           = oidPrefix + "11.3.5.2.1.1.4@i"
-	snmpV3UserCfgNum             = oidPrefix + "11.3.5.3.1.1.1@i" // V3User (11.3.5.3)
-	snmpV3UserCfgName            = oidPrefix + "11.3.5.3.1.1.2@s"
-	snmpV3UserCfgSecurityLevel   = oidPrefix + "11.3.5.3.1.1.3@i"
-	snmpV3UserCfgAuthProtocal    = oidPrefix + "11.3.5.3.1.1.4@i"
-	snmpV3UserCfgAuthPassword    = oidPrefix + "11.3.5.3.1.1.5@s"
-	snmpV3UserCfgPrivProtocal    = oidPrefix + "11.3.5.3.1.1.6@s"
-	snmpV3UserCfgPrivPassword    = oidPrefix + "11.3.5.3.1.1.7@s"
-	doutCfgNum                   = oidPrefix + "11.3.6.1.1.1@i" // Dout (11.3.6)
-	doutCfgEnable                = oidPrefix + "11.3.6.1.1.2@i-w"
-	doutCfgAction                = oidPrefix + "11.3.6.1.1.3@i-w"
-	deviceBootEvent              = oidPrefix + "11.4.1.1.0@i-w" // EventActionMap (11.4.1.1)
-	authenticationFailureEvent   = oidPrefix + "11.4.1.2.0@i-w"
-	authenticationSuccessEvent   = oidPrefix + "11.4.1.3.0@i-w"
-	deviceDDMEvent               = oidPrefix + "11.4.1.4.0@i-w"
-	devicePOEEvent               = oidPrefix + "11.4.1.5.0@i-w"
-	devicePOEBEvent              = oidPrefix + "11.4.1.6.0@i-w"
-	ringTopologyChangeEvent      = oidPrefix + "11.4.1.7.0@i-w"
-	envMonitorEvent              = oidPrefix + "11.4.1.8.0@i-w"
-	eventPortNumber              = oidPrefix + "11.4.2.1.1.1@i" // PortsEvent (11.4.2)
-	eventPortEventLog            = oidPrefix + "11.4.2.1.1.2@i-w"
-	eventPortEventsms            = oidPrefix + "11.4.2.1.1.3@i-w"
-	eventPortEventSMTP           = oidPrefix + "11.4.2.1.1.4@i-w"
-	eventPortEventsnmpTRAP       = oidPrefix + "11.4.2.1.1.5@i-w"
-	eventPortEventdout1          = oidPrefix + "11.4.2.1.1.6@i-w"
-	eventPortEventdout2          = oidPrefix + "11.4.2.1.1.7@i-w"
-	eventPowerNumber             = oidPrefix + "11.4.3.1.1.1@i" // PowerEvent (11.4.3)
-	eventPowerEventLog           = oidPrefix + "11.4.3.1.1.2@i-w"
-	eventPowerEventsms           = oidPrefix + "11.4.3.1.1.3@i-w"
-	eventPowerEventSMTP          = oidPrefix + "11.4.3.1.1.4@i-w"
-	eventPowerEventsnmpTRAP      = oidPrefix + "11.4.3.1.1.5@i-w"
-	eventPowerEventdout1         = oidPrefix + "11.4.3.1.1.6@i-w"
-	eventPowerEventdout2         = oidPrefix + "11.4.3.1.1.7@i-w"
-	eventDiNumber                = oidPrefix + "11.4.4.1.1.1@i" // DiEvent (11.4.4)
-	eventDiEventLog              = oidPrefix + "11.4.4.1.1.2@i-w"
-	eventDiEventsms              = oidPrefix + "11.4.4.1.1.3@i-w"
-	eventDiEventSMTP             = oidPrefix + "11.4.4.1.1.4@i-w"
-	eventDiEventsnmpTRAP         = oidPrefix + "11.4.4.1.1.5@i-w"
-	eventDiEventdout1            = oidPrefix + "11.4.4.1.1.6@i-w"
-	eventDiEventdout2            = oidPrefix + "11.4.4.1.1.7@i-w"
+	faultAlarmPowerCfgNum        = oidPrefix + "11.1.1.1.1@i-w-m:3" // FaultAlarm (11.1)
+	faultAlarmPowerStatus        = oidPrefix + "11.1.1.1.2@i-w-s-m:3"
+	faultAlarmPortCfgNum         = oidPrefix + "11.1.2.1.1@i-w-m:3"
+	faultAlarmPortLinkStatus     = oidPrefix + "11.1.2.1.2@i-w-s-m:3" // ===============================> here
+	eventDDMEnabled              = oidPrefix + "11.2.1.1.0@i-s-m:3"   // EventDDMEnabled (11.2.1)
+	eventDDMTemperatureLower     = oidPrefix + "11.2.1.2.0@s-s-m:3"
+	eventDDMTemperatureUpper     = oidPrefix + "11.2.1.3.0@s-s-m:3"
+	eventDDMVoltageLower         = oidPrefix + "11.2.1.4.0@s-s-m:3"
+	eventDDMVoltageUpper         = oidPrefix + "11.2.1.5.0@s-s-m:3"
+	eventDDMTxBiasLower          = oidPrefix + "11.2.1.6.0@s-s-m:3"
+	eventDDMTTxBiasUpper         = oidPrefix + "11.2.1.7.0@s-s-m:3"
+	eventDDMTxPowerLower         = oidPrefix + "11.2.1.8.0@s-s-m:3"
+	eventDDMTxPowerUpper         = oidPrefix + "11.2.1.9.0@s-s-m:3"
+	eventDDMRxPowerLower         = oidPrefix + "11.2.1.10.0@s-s-m:3"
+	eventDDMRxPowerUpper         = oidPrefix + "11.2.1.11.0@s-s-m:3"
+	eventMonitorEnabled          = oidPrefix + "11.2.2.1.0@i-s-m:3" // EventMonitor (11.2.1)
+	eventMonitorTemperatureLower = oidPrefix + "11.2.2.2.0@s-s-m:3"
+	eventMonitorTemperatureUpper = oidPrefix + "11.2.2.3.0@s-s-m:3"
+	eventMonitorVoltageLower     = oidPrefix + "11.2.2.4.0@s-s-m:3"
+	eventMonitorVoltageUpper     = oidPrefix + "11.2.2.5.0@s-s-m:3"
+	eventMonitorCurrentLower     = oidPrefix + "11.2.2.6.0@s-s-m:3"
+	eventMonitorCurrentUpper     = oidPrefix + "11.2.2.7.0@s-s-m:3"
+	eventMonitorPowerLower       = oidPrefix + "11.2.2.8.0@s-s-m:3"
+	eventMonitorPowerUpper       = oidPrefix + "11.2.2.9.0@s-s-m:3"
+	eventPOEAPortCfgNum          = oidPrefix + "11.2.3.1.1.1@i-m:3" // EventPOEA (11.2.3)
+	eventPOEAPingEnabled         = oidPrefix + "11.2.3.1.1.2@i-s-m:3"
+	eventPOEAPingIPAddr          = oidPrefix + "11.2.3.1.1.3@ip-s-m:3"
+	eventPOEAPingInterval        = oidPrefix + "11.2.3.1.1.4@i-s-m:3"
+	eventPOEAPingRetry           = oidPrefix + "11.2.3.1.1.5@i-s-m:3"
+	eventPOEAPingReboot          = oidPrefix + "11.2.3.1.1.6@i-s-m:3"
+	eventPOEAPingFailAction      = oidPrefix + "11.2.3.1.1.7@i-s-m:3"
+	localLogEnable               = oidPrefix + "11.3.1.1.0@i-s-m:3" // ActionConfiguration (11.3)
+	remoteSystemLogCfgNum        = oidPrefix + "11.3.2.1.1.1@i-m:3" // RemoteSystemLog (11.3.2)
+	remoteSystemLogHost          = oidPrefix + "11.3.2.1.1.2@ip-m:3"
+	remoteSystemLogTag           = oidPrefix + "11.3.2.1.1.3@s-m:3"
+	remoteSystemLogFacility      = oidPrefix + "11.3.2.1.1.4@s-m:3"
+	remoteSystemLogHostName      = oidPrefix + "11.3.2.1.1.5@s-m:3"
+	emailEnable                  = oidPrefix + "11.3.3.1.0@i-s-m:3"   // email (11.3.3.1)
+	emailServerUser              = oidPrefix + "11.3.3.2.1.0@s-s-m:3" // emailServer (11.3.3.2)
+	emailServerPassword          = oidPrefix + "11.3.3.2.2.0@s-s-m:3"
+	emailServerHost              = oidPrefix + "11.3.3.2.3.0@s-s-m:3"
+	emailServerSSLEnable         = oidPrefix + "11.3.3.2.4.0@i-s-m:3"
+	emailSender                  = oidPrefix + "11.3.3.3.0@s-s-m:3"
+	emailSubject                 = oidPrefix + "11.3.3.4.0@-s-m:3"
+	emailCloudEnable             = oidPrefix + "11.3.3.5.0@i-s-m:3"
+	emailReceiverCfgNum          = oidPrefix + "11.3.3.6.1.1@i-m:3"
+	emailReceiverHost            = oidPrefix + "11.3.3.6.1.2@s-m:3"
+	smsEnable                    = oidPrefix + "11.3.4.1.0@i-s-m:3" // SMS (11.3.4)
+	smsUser                      = oidPrefix + "11.3.4.2.0@s-s-m:3"
+	smsPassword                  = oidPrefix + "11.3.4.3.0@s-s-m:3"
+	smsSenderText                = oidPrefix + "11.3.4.4.0@s-s-m:3"
+	smsReceiverCfgNum            = oidPrefix + "11.3.4.5.1.1@i-m:3"
+	smsReceiverPhone             = oidPrefix + "11.3.4.5.1.2@s-m:3"
+	snmpResponseLocale           = oidPrefix + "11.3.5.1.1.0@i-s-m:3" // Snmp (11.3.5)
+	snmpCommunityCfgNum          = oidPrefix + "11.3.5.1.2.1.1@i-m:3"
+	snmpCommunityCfgString       = oidPrefix + "11.3.5.1.2.1.2@s-m:3"
+	snmpCommunityCfgReadOnly     = oidPrefix + "11.3.5.1.2.1.3@i-m:3"
+	snmpTrapCfgNum               = oidPrefix + "11.3.5.2.1.1.1@i-m:3" // Trap (11.3.5.2)
+	snmpTrapCfgCommunity         = oidPrefix + "11.3.5.2.1.1.2@s-m:3"
+	snmpTrapCfgIPAddress         = oidPrefix + "11.3.5.2.1.1.3@ip-m:3"
+	snmpTrapCfgVersion           = oidPrefix + "11.3.5.2.1.1.4@i-m:3"
+	snmpV3UserCfgNum             = oidPrefix + "11.3.5.3.1.1.1@i-m:3" // V3User (11.3.5.3)
+	snmpV3UserCfgName            = oidPrefix + "11.3.5.3.1.1.2@s-m:3"
+	snmpV3UserCfgSecurityLevel   = oidPrefix + "11.3.5.3.1.1.3@i-m:3"
+	snmpV3UserCfgAuthProtocal    = oidPrefix + "11.3.5.3.1.1.4@i-m:3"
+	snmpV3UserCfgAuthPassword    = oidPrefix + "11.3.5.3.1.1.5@s-m:3"
+	snmpV3UserCfgPrivProtocal    = oidPrefix + "11.3.5.3.1.1.6@s-m:3"
+	snmpV3UserCfgPrivPassword    = oidPrefix + "11.3.5.3.1.1.7@s-m:3"
+	doutCfgNum                   = oidPrefix + "11.3.6.1.1.1@i-m:3" // Dout (11.3.6)
+	doutCfgEnable                = oidPrefix + "11.3.6.1.1.2@i-s-m:3"
+	doutCfgAction                = oidPrefix + "11.3.6.1.1.3@i-s-m:3"
+	deviceBootEvent              = oidPrefix + "11.4.1.1.0@i-s-m:3" // EventActionMap (11.4.1.1)
+	authenticationFailureEvent   = oidPrefix + "11.4.1.2.0@i-s-m:3"
+	authenticationSuccessEvent   = oidPrefix + "11.4.1.3.0@i-s-m:3"
+	deviceDDMEvent               = oidPrefix + "11.4.1.4.0@i-s-m:3"
+	devicePOEEvent               = oidPrefix + "11.4.1.5.0@i-s-m:3"
+	devicePOEBEvent              = oidPrefix + "11.4.1.6.0@i-s-m:3"
+	ringTopologyChangeEvent      = oidPrefix + "11.4.1.7.0@i-s-m:3"
+	envMonitorEvent              = oidPrefix + "11.4.1.8.0@i-s-m:3"
+	eventPortNumber              = oidPrefix + "11.4.2.1.1.1@i-m:3" // PortsEvent (11.4.2)
+	eventPortEventLog            = oidPrefix + "11.4.2.1.1.2@i-s-m:3"
+	eventPortEventsms            = oidPrefix + "11.4.2.1.1.3@i-s-m:3"
+	eventPortEventSMTP           = oidPrefix + "11.4.2.1.1.4@i-s-m:3"
+	eventPortEventsnmpTRAP       = oidPrefix + "11.4.2.1.1.5@i-s-m:3"
+	eventPortEventdout1          = oidPrefix + "11.4.2.1.1.6@i-s-m:3"
+	eventPortEventdout2          = oidPrefix + "11.4.2.1.1.7@i-s-m:3"
+	eventPowerNumber             = oidPrefix + "11.4.3.1.1.1@i-m:3" // PowerEvent (11.4.3)
+	eventPowerEventLog           = oidPrefix + "11.4.3.1.1.2@i-s-m:3"
+	eventPowerEventsms           = oidPrefix + "11.4.3.1.1.3@i-s-m:3"
+	eventPowerEventSMTP          = oidPrefix + "11.4.3.1.1.4@i-s-m:3"
+	eventPowerEventsnmpTRAP      = oidPrefix + "11.4.3.1.1.5@i-s-m:3"
+	eventPowerEventdout1         = oidPrefix + "11.4.3.1.1.6@i-s-m:3"
+	eventPowerEventdout2         = oidPrefix + "11.4.3.1.1.7@i-s-m:3"
+	eventDiNumber                = oidPrefix + "11.4.4.1.1.1@i-m:3" // DiEvent (11.4.4)
+	eventDiEventLog              = oidPrefix + "11.4.4.1.1.2@i-s-m:3"
+	eventDiEventsms              = oidPrefix + "11.4.4.1.1.3@i-s-m:3"
+	eventDiEventSMTP             = oidPrefix + "11.4.4.1.1.4@i-s-m:3"
+	eventDiEventsnmpTRAP         = oidPrefix + "11.4.4.1.1.5@i-s-m:3"
+	eventDiEventdout1            = oidPrefix + "11.4.4.1.1.6@i-s-m:3"
+	eventDiEventdout2            = oidPrefix + "11.4.4.1.1.7@i-s-m:3"
 
 	// Monitoring (12)
 	envVoltage                     = oidPrefix + "12.1.1.0@s" // ENVMonitor (12.1)
 	envCurrent                     = oidPrefix + "12.1.2.0@s"
 	envWalt                        = oidPrefix + "12.1.3.0@s"
 	envTemperature                 = oidPrefix + "12.1.4.0@s"
-	ddmPortNumber                  = oidPrefix + "12.2.1.1.1@i" // DDM (12.2)
-	ddmTemperatureHighAlarm        = oidPrefix + "12.2.1.1.2@s"
-	ddmTemperatureHighWarning      = oidPrefix + "12.2.1.1.3@s"
-	ddmTemperatureCurrentValue     = oidPrefix + "12.2.1.1.4@s"
-	ddmTemperatureLowWarning       = oidPrefix + "12.2.1.1.5@s"
-	ddmTemperatureLowAlarm         = oidPrefix + "12.2.1.1.6@s"
-	ddmVccHighAlarm                = oidPrefix + "12.2.1.1.7@s"
-	ddmVccHighWarning              = oidPrefix + "12.2.1.1.8@s"
-	ddmVccCurrentValue             = oidPrefix + "12.2.1.1.9@s"
-	ddmVccLowWarning               = oidPrefix + "12.2.1.1.10@s"
-	ddmVccLowAlarm                 = oidPrefix + "12.2.1.1.11@"
-	ddmBiasHighAlarm               = oidPrefix + "12.2.1.1.12@s"
-	ddmBiasHighWarning             = oidPrefix + "12.2.1.1.13@s"
-	ddmBiasCurrentValue            = oidPrefix + "12.2.1.1.14@s"
-	ddmBiasLowWarning              = oidPrefix + "12.2.1.1.15@s"
-	ddmBiasLowAlarm                = oidPrefix + "12.2.1.1.16@s"
-	ddmTxPowerHighAlarm            = oidPrefix + "12.2.1.1.17@s"
-	ddmTxPowerHighWarning          = oidPrefix + "12.2.1.1.18@s"
-	ddmTxPowerCurrentValue         = oidPrefix + "12.2.1.1.19@s"
-	ddmTxPowerLowWarning           = oidPrefix + "12.2.1.1.20@s"
-	ddmTxPowerLowAlarm             = oidPrefix + "12.2.1.1.21@s"
-	ddmRxPowerHighAlarm            = oidPrefix + "12.2.1.1.22@s"
-	ddmRxPowerHighWarning          = oidPrefix + "12.2.1.1.23@s"
-	ddmRxPowerCurrentValue         = oidPrefix + "12.2.1.1.24@s"
-	ddmRxPowerLowWarning           = oidPrefix + "12.2.1.1.25@s"
-	ddmRxPowerLowAlarm             = oidPrefix + "12.2.1.1.26@s"
-	monitorPowerNumber             = oidPrefix + "12.3.1.1.1@i" // PowerMonitor (12.3)
-	monitorPowerStatus             = oidPrefix + "12.3.1.1.2@i"
-	monitorPoEPortCfgNum           = oidPrefix + "12.4.1.1.1@i" // POEMonitor (12.4)
-	monitorPoEPortStatus           = oidPrefix + "12.4.1.1.2@s"
-	monitorPoEPortClass            = oidPrefix + "12.4.1.1.3@s"
-	monitorPoEPortPowerConsumption = oidPrefix + "12.4.1.1.4@s"
-	monitorPoEPortCurrent          = oidPrefix + "12.4.1.1.5@s"
-	monitorPoEPortVoltage          = oidPrefix + "12.4.1.1.6@s"
-	monitorPoEPortTemperature      = oidPrefix + "12.4.1.1.7@s"
+	ddmPortNumber                  = oidPrefix + "12.2.1.1.1@i-m:3" // DDM (12.2)
+	ddmTemperatureHighAlarm        = oidPrefix + "12.2.1.1.2@s-m:3"
+	ddmTemperatureHighWarning      = oidPrefix + "12.2.1.1.3@s-m:3"
+	ddmTemperatureCurrentValue     = oidPrefix + "12.2.1.1.4@s-m:3"
+	ddmTemperatureLowWarning       = oidPrefix + "12.2.1.1.5@s-m:3"
+	ddmTemperatureLowAlarm         = oidPrefix + "12.2.1.1.6@s-m:3"
+	ddmVccHighAlarm                = oidPrefix + "12.2.1.1.7@s-m:3"
+	ddmVccHighWarning              = oidPrefix + "12.2.1.1.8@s-m:3"
+	ddmVccCurrentValue             = oidPrefix + "12.2.1.1.9@s-m:3"
+	ddmVccLowWarning               = oidPrefix + "12.2.1.1.10@s-m:3"
+	ddmVccLowAlarm                 = oidPrefix + "12.2.1.1.11@s-m:3"
+	ddmBiasHighAlarm               = oidPrefix + "12.2.1.1.12@s-m:3"
+	ddmBiasHighWarning             = oidPrefix + "12.2.1.1.13@s-m:3"
+	ddmBiasCurrentValue            = oidPrefix + "12.2.1.1.14@s-m:3"
+	ddmBiasLowWarning              = oidPrefix + "12.2.1.1.15@s-m:3"
+	ddmBiasLowAlarm                = oidPrefix + "12.2.1.1.16@s-m:3"
+	ddmTxPowerHighAlarm            = oidPrefix + "12.2.1.1.17@s-m:3"
+	ddmTxPowerHighWarning          = oidPrefix + "12.2.1.1.18@s-m:3"
+	ddmTxPowerCurrentValue         = oidPrefix + "12.2.1.1.19@s-m:3"
+	ddmTxPowerLowWarning           = oidPrefix + "12.2.1.1.20@s-m:3"
+	ddmTxPowerLowAlarm             = oidPrefix + "12.2.1.1.21@s-m:3"
+	ddmRxPowerHighAlarm            = oidPrefix + "12.2.1.1.22@s-m:3"
+	ddmRxPowerHighWarning          = oidPrefix + "12.2.1.1.23@s-m:3"
+	ddmRxPowerCurrentValue         = oidPrefix + "12.2.1.1.24@s-m:3"
+	ddmRxPowerLowWarning           = oidPrefix + "12.2.1.1.25@s-m:3"
+	ddmRxPowerLowAlarm             = oidPrefix + "12.2.1.1.26@s-m:3"
+	monitorPowerNumber             = oidPrefix + "12.3.1.1.1@i-m:3" // PowerMonitor (12.3)
+	monitorPowerStatus             = oidPrefix + "12.3.1.1.2@i-m:3"
+	monitorPoEPortCfgNum           = oidPrefix + "12.4.1.1.1@i-w-m:3" // POEMonitor (12.4)
+	monitorPoEPortStatus           = oidPrefix + "12.4.1.1.2@s-w-m:3"
+	monitorPoEPortClass            = oidPrefix + "12.4.1.1.3@s-w-m:3"
+	monitorPoEPortPowerConsumption = oidPrefix + "12.4.1.1.4@s-w-m:3"
+	monitorPoEPortCurrent          = oidPrefix + "12.4.1.1.5@s-w-m:3"
+	monitorPoEPortVoltage          = oidPrefix + "12.4.1.1.6@s-w-m:3"
+	monitorPoEPortTemperature      = oidPrefix + "12.4.1.1.7@s-w-m:3"
 	cpuLoadingMonitor              = oidPrefix + "12.5.1.0@i" // CPULoadingMonitor (12.5)
 
 	// SaveConfiguration (13)
-	saveCfgMgtAction = oidPrefix + "13.1.0@i-w"
+	saveCfgMgtAction = oidPrefix + "13.1.0@s-s" // the value type to set is integer, but get will be string, set it string for now
 
 	// FactoryDefault (14)
-	factoryDefaultAction = oidPrefix + "14.1.0@i-w"
+	factoryDefaultAction = oidPrefix + "14.1.0@s-s" // the value type to set is integer, but get will be string, set it string for now
 
 	// SystemReboot (15)
-	systemRebootAction = oidPrefix + "15.1.0@i-w"
+	systemRebootAction = oidPrefix + "15.1.0@s-s" // the value type to set is integer, but get will be string, set it string for now
 
 	// Maintenance (16)
-	importConfiguration = oidPrefix + "16.1.0@s-w"
-	upgrade             = oidPrefix + "16.2.0@s-w"
+	importConfiguration = oidPrefix + "16.1.0@s-s"
+	upgrade             = oidPrefix + "16.2.0@s-s"
 )
 
 var oidMap map[string]*Task
@@ -249,15 +263,22 @@ var stats Stats
 
 // Stats is the Statistics
 type Stats struct {
-	total  int
-	pass   int
-	failed int
+	total       int
+	pass        int
+	failed      int
+	marked      int
+	unmarkedOID []string
 }
 
 func (s *Stats) init() {
 	s.total = 0
 	s.pass = 0
 	s.failed = 0
+	s.marked = 0
+}
+
+func (s *Stats) AddunmarkedOID(oid string) {
+	s.unmarkedOID = append(s.unmarkedOID, oid)
 }
 
 func (s *Stats) AddPass() {
@@ -270,100 +291,253 @@ func (s *Stats) AddFailed() {
 	s.total++
 }
 
+func (s *Stats) AddMarked() {
+	s.marked++
+}
+
+func isGet(t *Task) bool {
+	return t.taskType == typeGet || t.taskType == typeSet
+}
+
+func isWalk(t *Task) bool {
+	return t.taskType == typeWalk || t.taskType == typeWalkSet
+}
+
+func taskTranslator(typeInt int) string {
+	if typeInt == typeGet {
+		return "get"
+	} else if typeInt == typeWalk {
+		return "walk"
+	} else if typeInt == typeSet {
+		return "set"
+	} else if typeInt == typeWalkSet {
+		return "walkSet"
+	}
+	return "sth wrong"
+}
+
 // Task is the task descirbed each snmp command and result
 type Task struct {
-	name                  string
-	taskType              string // "set", "get"
-	getCmd                string
-	setCmd                string
+	name     string
+	taskType int //  0 = "get", 1 = "walk", 2 = "set" 	, 3 = "walkSet"
+	oid      string
+
+	getCmd  string
+	walkCmd string
+	setCmd  string
+
 	valtype               string
-	defaultVal            string
+	defaultVal            []string
 	rawResult             string
 	rawResultafterSet     string
 	rawResultAfterDefault string
 	testSuccess           string
+	failedReason          string
+	ps                    string
+	failedtype            string
 }
 
-func parseTaskTypeFromCmd(oid string) string {
-	if strings.Contains(oid, "-w") {
-		return "set"
-	} else {
-		return "get"
+func parseTaskTypeFromCmd(oid string) int {
+	if strings.Contains(oid, "-w-s") {
+		return typeWalkSet
+	} else if strings.Contains(oid, "-w") {
+		return typeWalk
+	} else if strings.Contains(oid, "-s") {
+		return typeSet
 	}
-}
-
-func parseValTypeFromCmd(oid string) string {
-	if strings.Contains("@i", oid) && !strings.Contains("@ip", oid) {
-		return snmpSetTypeInt
-	} else if strings.Contains("@s", oid) {
-		return snmpSetTypeString
-	} else if strings.Contains("@ip", oid) {
-		return snmpSetTypeIpaddr
-	}
-	return "sthing wrong"
-}
-
-func rmPostFix(oid string) string {
-	return strings.Split(oid, "@")[0]
-}
-
-func (t *Task) Init(taskName, oid string) {
-	t.name = taskName
-	t.taskType = parseTaskTypeFromCmd(oid)
-	t.valtype = parseValTypeFromCmd(oid)
-	oid = rmPostFix(oid)
-	t.getCmd = snmpGetPrefix + oid
-	// We need to test all oid by get, and some oid has the read-write access, so we store the set cmd in task.setCmd
-	//
-	if t.taskType == "set" {
-		t.setCmd = snmpSetPrefix + oid + t.valtype + testValMap[t.valtype]
-	}
-}
-
-func (t *Task) Exec() {
-	_, result := utils.ShellExec(t.getCmd)
-	t.rawResult = result
-	t.handleFirstGet()
-	t.printResult()
-
-}
-
-func probe(mainString, subString string) bool {
-	return strings.Contains(mainString, subString)
-}
-
-func (t *Task) handleFirstGet() {
-	// fmt.Println("handleRawVal")
-	// fmt.Println("Raw Val is => ", t.rawResult)
-	if probe(t.rawResult, "No Such Instance currently exists at this OID") {
-		t.testSuccess = cross
-		stats.AddFailed()
-	} else if probe(t.rawResult, "STRING:") {
-		val := strings.Split(t.rawResult, "STRING: ")[1]
-		val = strings.Replace(val, "\"", "", -1)
-		t.defaultVal = val
-		t.testSuccess = check
-		stats.AddPass()
-	} else if probe(t.rawResult, "INTEGER:") {
-		val := strings.Split(t.rawResult, "INTEGER: ")[1]
-		t.defaultVal = val
-		t.testSuccess = check
-		stats.AddPass()
-	}
-}
-
-func (t *Task) printResult() {
-	fmt.Println("\n")
-	fmt.Println("Name: ", t.name)
-	fmt.Println("GetCmd: ", t.getCmd)
-	fmt.Println("GET "+t.name+" ===== >", t.defaultVal)
-	fmt.Println("Test pass: ", t.testSuccess)
+	return typeGet
 }
 
 func genTask(name, oid string) *Task {
 	t := new(Task)
 	t.Init(name, oid)
 	return t
+}
+
+func parseValTypeFromCmd(oid string) string {
+	if strings.Contains(oid, "@i") && !strings.Contains(oid, "@ip") {
+		return strings.TrimSpace(snmpSetTypeInt)
+	} else if strings.Contains(oid, "@s") {
+		return strings.TrimSpace(snmpSetTypeString)
+	} else if strings.Contains(oid, "@ip") {
+		return strings.TrimSpace(snmpSetTypeIpaddr)
+	}
+	return "sthing wrong"
+}
+
+func parsePSFromCmd(oid string) string {
+	if strings.Contains(oid, "-ps:") {
+		return strings.Split(oid, "-ps:")[1]
+	}
+	return ""
+}
+
+func failedTypeTranlator(from string) string {
+	switch from {
+	case "1":
+		return "Need to set value to the device, or connect to another device to get the value."
+	case "2":
+		return "Spec issue"
+	case "3":
+		return "snmp program issue"
+	default:
+		return ""
+	}
+}
+
+func parseFailedType(oid string) string {
+	if strings.Contains(oid, "-m:") {
+		return strings.Split(oid, "-m:")[1]
+	}
+	return ""
+}
+
+func rmPostFix(oid string) string {
+	return strings.Split(oid, "@")[0]
+}
+
+func probe(mainString, subString string) bool {
+	return strings.Contains(mainString, subString)
+}
+
+func (t *Task) Failed(reason string) {
+	t.testSuccess = cross
+	t.failedReason = reason
+	stats.AddFailed()
+	if len(t.failedtype) > 0 {
+		stats.AddMarked()
+	} else {
+		stats.AddunmarkedOID(t.oid)
+	}
+}
+
+func (t *Task) Success() {
+	t.testSuccess = check
+	stats.AddPass()
+}
+
+func (t *Task) Init(taskName, oid string) {
+	t.name = taskName
+	t.taskType = parseTaskTypeFromCmd(oid)
+	t.valtype = parseValTypeFromCmd(oid)
+	t.failedtype = parseFailedType(oid)
+
+	oid = rmPostFix(oid)
+	t.oid = strings.Split(oid, oidPrefix)[1]
+	if t.taskType == typeGet {
+		t.getCmd = snmpGetPrefix + oid
+	} else if t.taskType == typeWalk {
+		t.walkCmd = snmpWalkPrefix + oid
+	} else if t.taskType == typeSet {
+		// We need to test all oid by get, and some oid has the read-write access, so we store the set cmd in task.setCmd
+		//
+		t.getCmd = snmpGetPrefix + oid
+		t.setCmd = snmpSetPrefix + oid + t.valtype + testValMap[t.valtype]
+	} else if t.taskType == typeWalkSet {
+		t.walkCmd = snmpWalkPrefix + oid
+		// @@Todo: handle the condition of walk and set
+		// t.setCmd = snmpSetPrefix + oid + t.valtype + testValMap[t.valtype]
+	}
+
+}
+
+func (t *Task) Exec() {
+	fmt.Println("================================ type is ", taskTranslator(t.taskType))
+
+	if isGet(t) {
+		err, result := utils.ShellExec(t.getCmd)
+		t.rawResult = result
+		if err != nil {
+			fmt.Println("exec error ", err)
+		}
+	} else if isWalk(t) {
+		err, result := utils.ShellExec(t.walkCmd)
+		if err != nil {
+			fmt.Println("exec error ", err)
+		}
+		// work around to fix the issue that snpmwalk after snmpget will lead to the result that nothingInThisOID
+		err, result = utils.ShellExec(t.walkCmd)
+		if err != nil {
+			fmt.Println("exec error ", err)
+		}
+		t.rawResult = result
+	}
+
+	t.handleFirstGet()
+	t.printResult()
+
+}
+
+func (t *Task) handleFirstGet() {
+	// fmt.Println("handleRawVal")
+	// fmt.Println("Raw lines is =>", strings.Split(t.rawResult, "\n")[0])
+
+	if probe(t.rawResult, nothingInThisOID) {
+		t.Failed(nothingInThisOID)
+		return
+	}
+
+	// Check the value type first
+	if t.valtype == "string" && !probe(t.rawResult, "STRING:") {
+		t.Failed("Expect type string, but probe other type")
+		return
+	} else if t.valtype == "integer" && !probe(t.rawResult, "INTEGER:") {
+		t.Failed("Expect type integer, but probe other type")
+		return
+	} else if t.valtype == "ipaddress" && !probe(t.rawResult, "IPADDRESS:") {
+		t.Failed("Expect type ipaddress, but probe other type")
+		return
+	}
+
+	// Parse all the value from snmpwalk line by line
+	if isWalk(t) {
+		lines := strings.Split(t.rawResult, "\n")
+		for _, line := range lines {
+			// fmt.Println("line is ", line)
+			if probe(line, "STRING: ") {
+				val := strings.Split(line, "STRING: ")[1]
+				val = strings.Replace(val, "\"", "", -1)
+				t.defaultVal = append(t.defaultVal, val)
+			} else if probe(line, "INTEGER:") {
+				val := strings.Split(line, "INTEGER: ")[1]
+				t.defaultVal = append(t.defaultVal, val)
+			}
+		}
+		t.Success()
+
+	} else if isGet(t) {
+		if probe(t.rawResult, "STRING:") {
+			val := strings.Split(t.rawResult, "STRING: ")[1]
+			val = strings.Replace(val, "\"", "", -1)
+			t.defaultVal = []string{val}
+			t.Success()
+		} else if probe(t.rawResult, "INTEGER:") {
+			val := strings.Split(t.rawResult, "INTEGER: ")[1]
+			t.defaultVal = []string{val}
+			t.Success()
+		}
+	}
+}
+
+func (t *Task) printResult() {
+	// fmt.Println("Raw Val is => ", t.rawResult)
+	fmt.Println("Name:   ", t.name)
+	fmt.Println("oid:    ", t.oid)
+	if isGet(t) {
+		fmt.Println("GetCmd:  ", t.getCmd)
+	} else if isWalk(t) {
+		fmt.Println("WalkCmd: ", t.walkCmd)
+	}
+	fmt.Println("GET "+t.name+" ===== >", t.defaultVal)
+	fmt.Println("\n")
+	fmt.Println("Test pass: ", t.testSuccess)
+	if t.testSuccess == cross {
+		if len(t.failedtype) > 0 {
+			fmt.Println("Failed type:    ", failedTypeTranlator(t.failedtype))
+		}
+		fmt.Println("Failed reaseon: ", t.failedReason)
+		fmt.Println("Raw Val is => ", t.rawResult)
+	}
 }
 
 func init() {
@@ -374,7 +548,6 @@ func init() {
 	testValMap["integer"] = "20"
 	testValMap["ipaddress"] = "192.168.1.1"
 
-	// taskEntry = append(taskEntry, genTask(oid))
 	taskEntry = append(taskEntry, genTask("systemName", systemName))
 	taskEntry = append(taskEntry, genTask("systemLocation", systemLocation))
 	taskEntry = append(taskEntry, genTask("systemContact", systemContact))
@@ -383,6 +556,7 @@ func init() {
 	taskEntry = append(taskEntry, genTask("systemMacaddress", systemMacaddress))
 	taskEntry = append(taskEntry, genTask("systemAutoLogoutTime", systemAutoLogoutTime))
 	taskEntry = append(taskEntry, genTask("systemSerialNum", systemSerialNum))
+
 	taskEntry = append(taskEntry, genTask("vlanPortCfgNum", vlanPortCfgNum))
 	taskEntry = append(taskEntry, genTask("vlanMembers", vlanMembers))
 	taskEntry = append(taskEntry, genTask("vlanTags", vlanTags))
@@ -392,7 +566,7 @@ func init() {
 	taskEntry = append(taskEntry, genTask("mvrCfgNum", mvrCfgNum))
 	taskEntry = append(taskEntry, genTask("mvrCfgVid", mvrCfgVid))
 	taskEntry = append(taskEntry, genTask("mvrIPAddr", mvrIPAddr))
-	taskEntry = append(taskEntry, genTask("mvrMemnters", mvrMemnters))
+	taskEntry = append(taskEntry, genTask("mvrMembers", mvrMembers))
 	taskEntry = append(taskEntry, genTask("igmpEnableQuerier", igmpEnableQuerier))
 	taskEntry = append(taskEntry, genTask("igmpQuerierVersion", igmpQuerierVersion))
 	taskEntry = append(taskEntry, genTask("igmpEnableSnooping", igmpEnableSnooping))
@@ -559,6 +733,7 @@ func init() {
 	taskEntry = append(taskEntry, genTask("systemRebootAction", systemRebootAction))
 	taskEntry = append(taskEntry, genTask("importConfiguration", importConfiguration))
 	taskEntry = append(taskEntry, genTask("upgrade", upgrade))
+	// here
 
 }
 
@@ -570,15 +745,21 @@ func main() {
 	// fmt.Println("get command is", snmpGetPrefix+rmPostFix(systemContact))
 	// _, b4 := utils.ShellExec(snmpGetPrefix + rmPostFix(systemContact))
 	// fmt.Println("set command is", snmpSetPrefix+rmPostFix(systemContact))
-	// _, setResult := utils.ShellExec(snmpSetPrefix + rmPostFix(systemContact) + " string " + "helloWalter")
-	// fmt.Println("result is " + b4)
+	// cmd := "snmpwalk -v 3 -u walter -l authPriv -a MD5 -A 123456789 -x DES -X 123456789 192.168.15.10 1.3.6.1.4.1.37072.302.2.3.2.1.1.1.1"
+	// _, setResult := utils.ShellExec(cmd)
 	// fmt.Println("result is " + setResult)
 	for _, val := range taskEntry {
-		fmt.Println(val.name)
 		val.Exec()
 	}
-	fmt.Println("================================================")
-	fmt.Println("Pass:   ", stats.pass)
-	fmt.Println("Failed: ", stats.failed)
-	fmt.Println("Total:  ", stats.total)
+	fmt.Println("\n\n=================== Stats " + deviceIP + "=============================")
+	fmt.Println("Pass:       ", stats.pass)
+	fmt.Println("Failed:     ", stats.failed)
+	fmt.Println("Fail marked:", stats.marked)
+	if stats.marked != stats.failed {
+		for _, val := range stats.unmarkedOID {
+			fmt.Println(val)
+		}
+	}
+	fmt.Println("Total:      ", stats.total)
+
 }
