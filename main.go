@@ -84,35 +84,6 @@ const (
 
 	// rstpCompliances (134.2.2)
 	rstpCompliance = rfc4318Prefix + "134.2.2.1@i"
-
-	// dot1dTp (17.4)
-	dot1dTpLearnedEntryDiscards = rfc4318Prefix + "17.4.1@i"
-	dot1dTpAgingTime            = rfc4318Prefix + "17.4.2@i-s"
-	// dot1dTpFdbTable (17.4.3)
-	// dot1dTpFdbEntry (not-accessible)(17.4.3.1)
-	dot1dTpFdbAddress = rfc4318Prefix + "17.4.3.1.1@s"
-	dot1dTpFdbPort    = rfc4318Prefix + "17.4.3.1.2@i"
-	dot1dTpFdbStatus  = rfc4318Prefix + "17.4.3.1.3@i"
-
-	// dot1dTpPortTable (17.4.4)
-	// dot1dTpPortEntry (not-accessible)(17.4.4.1)
-	dot1dTpPort           = rfc4318Prefix + "17.4.4.1.1@i"
-	dot1dTpPortMaxInfo    = rfc4318Prefix + "17.4.4.1.2@i"
-	dot1dTpPortInFrames   = rfc4318Prefix + "17.4.4.1.3@i"
-	dot1dTpPortOutFrames  = rfc4318Prefix + "17.4.4.1.4@i"
-	dot1dTpPortInDiscards = rfc4318Prefix + "17.4.4.1.5@i"
-
-	// dotldStatic (17.5)
-	// dot1dStaticTable (17.5.1)
-	// dot1dStaticEntry (not-accessible)(17.5.1.1)
-	dot1dStaticAddress       = rfc4318Prefix + "17.5.1.1.1@s-s"
-	dot1dStaticReceivePort   = rfc4318Prefix + "17.5.1.1.2@i-s"
-	dot1dStaticAllowedToGoTo = rfc4318Prefix + "17.5.1.1.3@s-s"
-	dot1dStaticStatus        = rfc4318Prefix + "17.5.1.1.4@i-s"
-
-	// dot1dConformance(17.8)
-	// dot1dGroups(17.8.1)
-
 	// ************** rfc4318 **************
 
 	// ************** Private MIB *********************
@@ -487,8 +458,17 @@ func (t *Task) Init(taskName, oid string) {
 	t.valtype = parseValTypeFromCmd(oid)
 	t.failedtype = parseFailedType(oid)
 
+	// parse oid
 	oid = rmPostFix(oid)
-	t.oid = strings.Split(oid, oidPrefix)[1]
+	if strings.Contains(oid, oidPrefix) {
+		// private oidPrefix
+		t.oid = strings.Split(oid, oidPrefix)[1]
+	} else if strings.Contains(oid, rfc4318Prefix) {
+		// rfc4318 oid prefix
+		t.oid = strings.Split(oid, rfc4318Prefix)[1]
+	}
+
+	// parse cmd
 	if t.taskType == typeGet {
 		t.getCmd = snmpGetPrefix + oid
 	} else if t.taskType == typeWalk {
@@ -613,6 +593,26 @@ func init() {
 	testValMap["integer"] = "20"
 	testValMap["ipaddress"] = "192.168.1.1"
 
+	// RFC 4318 starts
+	taskEntry = append(taskEntry, genTask("dot1dStpVersion", dot1dStpVersion))
+	taskEntry = append(taskEntry, genTask("dot1dStpTxHoldCount", dot1dStpTxHoldCount))
+	taskEntry = append(taskEntry, genTask("dot1dStpPortProtocolMigration", dot1dStpPortProtocolMigration))
+	taskEntry = append(taskEntry, genTask("dot1dStpPortAdminEdgePort", dot1dStpPortAdminEdgePort))
+	taskEntry = append(taskEntry, genTask("dot1dStpPortOperEdgePort", dot1dStpPortOperEdgePort))
+	taskEntry = append(taskEntry, genTask("dot1dStpPortAdminPointToPoint", dot1dStpPortAdminPointToPoint))
+	taskEntry = append(taskEntry, genTask("dot1dStpPortOperPointToPoint", dot1dStpPortOperPointToPoint))
+	taskEntry = append(taskEntry, genTask("dot1dStpPortAdminPathCost", dot1dStpPortAdminPathCost))
+
+	// // no definition yet
+	// taskEntry = append(taskEntry, genTask("rstpNotifications", rstpNotifications))
+	// taskEntry = append(taskEntry, genTask("rstpObjects", rstpObjects))
+	// // just groups
+	// taskEntry = append(taskEntry, genTask("rstpBridgeGroup", rstpBridgeGroup))
+	// taskEntry = append(taskEntry, genTask("rstpPortGroup", rstpPortGroup))
+	// taskEntry = append(taskEntry, genTask("rstpCompliance", rstpCompliance))
+
+	// RFC 4318 Ends
+
 	// taskEntry = append(taskEntry, genTask("systemName", systemName))
 	// taskEntry = append(taskEntry, genTask("systemLocation", systemLocation))
 	// taskEntry = append(taskEntry, genTask("systemContact", systemContact))
@@ -677,13 +677,13 @@ func init() {
 	// taskEntry = append(taskEntry, genTask("eventMonitorCurrentUpper", eventMonitorCurrentUpper))
 	// taskEntry = append(taskEntry, genTask("eventMonitorPowerLower", eventMonitorPowerLower))
 	// taskEntry = append(taskEntry, genTask("eventMonitorPowerUpper", eventMonitorPowerUpper))
-	taskEntry = append(taskEntry, genTask("eventPOEAPortCfgNum", eventPOEAPortCfgNum))
-	taskEntry = append(taskEntry, genTask("eventPOEAPingEnabled", eventPOEAPingEnabled))
-	taskEntry = append(taskEntry, genTask("eventPOEAPingIPAddr", eventPOEAPingIPAddr))
-	taskEntry = append(taskEntry, genTask("eventPOEAPingInterval", eventPOEAPingInterval))
-	taskEntry = append(taskEntry, genTask("eventPOEAPingRetry", eventPOEAPingRetry))
-	taskEntry = append(taskEntry, genTask("eventPOEAPingReboot", eventPOEAPingReboot))
-	taskEntry = append(taskEntry, genTask("eventPOEAPingFailAction", eventPOEAPingFailAction))
+	// taskEntry = append(taskEntry, genTask("eventPOEAPortCfgNum", eventPOEAPortCfgNum))
+	// taskEntry = append(taskEntry, genTask("eventPOEAPingEnabled", eventPOEAPingEnabled))
+	// taskEntry = append(taskEntry, genTask("eventPOEAPingIPAddr", eventPOEAPingIPAddr))
+	// taskEntry = append(taskEntry, genTask("eventPOEAPingInterval", eventPOEAPingInterval))
+	// taskEntry = append(taskEntry, genTask("eventPOEAPingRetry", eventPOEAPingRetry))
+	// taskEntry = append(taskEntry, genTask("eventPOEAPingReboot", eventPOEAPingReboot))
+	// taskEntry = append(taskEntry, genTask("eventPOEAPingFailAction", eventPOEAPingFailAction))
 	// taskEntry = append(taskEntry, genTask("localLogEnable", localLogEnable))
 	// taskEntry = append(taskEntry, genTask("remoteSystemLogCfgNum", remoteSystemLogCfgNum))
 	// taskEntry = append(taskEntry, genTask("remoteSystemLogHost", remoteSystemLogHost))
