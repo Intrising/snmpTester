@@ -40,20 +40,82 @@ const (
 	snmpSetTypeInt    = " integer "
 	snmpSetTypeIpaddr = " ipaddress "
 	oidPrefix         = "1.3.6.1.4.1.37072.302.2.3."
+	rfc4318Prefix     = "1.3.6.1.2.1."
+	rfc4318           = ""
 
 	// no postfix means snmpget commnad
 	// all command can be read so no postfix for read-only
 	// -s   means read-write
 	// -w-s means use cmd walk and read-write
+	//
+	// ATTENTION: The type here is not the exact type in the MIB, but the type from snmpMIB program
 	// @s   means type string
 	// @i   means type integer
-	// @ip  means type ipaddress
+	// ATTENTION: The type here is not the exact type in the MIB, but the type from snmpMIB program
+	//
 	// -ps  means ps
 	// -m:  marks the known failed type:
 	//                                  1 =>  need to set value to the device
 	//                                  2 =>  Spec issue
 	//                                  3 =>  snmp program issue
 
+	// ************** rfc4318 **************
+
+	// RFC 4318 starts
+	dot1dStpVersion     = rfc4318Prefix + "17.2.16@i-s"
+	dot1dStpTxHoldCount = rfc4318Prefix + "17.2.17@i-s"
+	// dot1dStpExtPortTable (17.2.19)
+	// dot1dStpExtPortEntry (not-accessible)(17.2.19.1)
+	dot1dStpPortProtocolMigration = rfc4318Prefix + "17.2.19.1.1@i-s"
+	dot1dStpPortAdminEdgePort     = rfc4318Prefix + "17.2.19.1.2@i-s"
+	dot1dStpPortOperEdgePort      = rfc4318Prefix + "17.2.19.1.3@i"
+	dot1dStpPortAdminPointToPoint = rfc4318Prefix + "17.2.19.1.4@i-s"
+	dot1dStpPortOperPointToPoint  = rfc4318Prefix + "17.2.19.1.5@i"
+	dot1dStpPortAdminPathCost     = rfc4318Prefix + "17.2.19.1.6@i-s"
+
+	// Following 2 don't have the data type in rfc4318 yet
+	rstpNotifications = rfc4318Prefix + "134.0@i"
+	rstpObjects       = rfc4318Prefix + "134.1@i"
+
+	// Following 2 are the OBJECT-GROUP type, need details
+	// rstpGroups (134.2.1)
+	rstpBridgeGroup = rfc4318Prefix + "134.2.1.1@i"
+	rstpPortGroup   = rfc4318Prefix + "134.2.1.1@i"
+
+	// rstpCompliances (134.2.2)
+	rstpCompliance = rfc4318Prefix + "134.2.2.1@i"
+
+	// dot1dTp (17.4)
+	dot1dTpLearnedEntryDiscards = rfc4318Prefix + "17.4.1@i"
+	dot1dTpAgingTime            = rfc4318Prefix + "17.4.2@i-s"
+	// dot1dTpFdbTable (17.4.3)
+	// dot1dTpFdbEntry (not-accessible)(17.4.3.1)
+	dot1dTpFdbAddress = rfc4318Prefix + "17.4.3.1.1@s"
+	dot1dTpFdbPort    = rfc4318Prefix + "17.4.3.1.2@i"
+	dot1dTpFdbStatus  = rfc4318Prefix + "17.4.3.1.3@i"
+
+	// dot1dTpPortTable (17.4.4)
+	// dot1dTpPortEntry (not-accessible)(17.4.4.1)
+	dot1dTpPort           = rfc4318Prefix + "17.4.4.1.1@i"
+	dot1dTpPortMaxInfo    = rfc4318Prefix + "17.4.4.1.2@i"
+	dot1dTpPortInFrames   = rfc4318Prefix + "17.4.4.1.3@i"
+	dot1dTpPortOutFrames  = rfc4318Prefix + "17.4.4.1.4@i"
+	dot1dTpPortInDiscards = rfc4318Prefix + "17.4.4.1.5@i"
+
+	// dotldStatic (17.5)
+	// dot1dStaticTable (17.5.1)
+	// dot1dStaticEntry (not-accessible)(17.5.1.1)
+	dot1dStaticAddress       = rfc4318Prefix + "17.5.1.1.1@s-s"
+	dot1dStaticReceivePort   = rfc4318Prefix + "17.5.1.1.2@i-s"
+	dot1dStaticAllowedToGoTo = rfc4318Prefix + "17.5.1.1.3@s-s"
+	dot1dStaticStatus        = rfc4318Prefix + "17.5.1.1.4@i-s"
+
+	// dot1dConformance(17.8)
+	// dot1dGroups(17.8.1)
+
+	// ************** rfc4318 **************
+
+	// ************** Private MIB *********************
 	// SYSTEM (1)
 	systemName           = oidPrefix + "1.1.0@s-s"
 	systemLocation       = oidPrefix + "1.2.0@s-s"
@@ -255,6 +317,8 @@ const (
 	// Maintenance (16)
 	importConfiguration = oidPrefix + "16.1.0@s-s"
 	upgrade             = oidPrefix + "16.2.0@s-s"
+
+	// ************** Private MIB *********************
 )
 
 var oidMap map[string]*Task
