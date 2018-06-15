@@ -1,9 +1,10 @@
 package main
 
 import (
-	"./utils"
 	"fmt"
 	"strings"
+
+	"./utils"
 	// "time"
 )
 
@@ -39,8 +40,8 @@ const (
 	snmpSetTypeString = " string "
 	snmpSetTypeInt    = " integer "
 	snmpSetTypeIpaddr = " ipaddress "
-	oidPrefix         = "1.3.6.1.4.1.37072.302.2.3."
-	rfc4318Prefix     = "1.3.6.1.2.1."
+	privateMibOid     = "1.3.6.1.4.1.37072.302.2.3."
+	mib2Prefix        = "1.3.6.1.2.1."
 	rfc4318           = ""
 
 	// no postfix means snmpget commnad
@@ -59,235 +60,371 @@ const (
 	//                                  2 =>  Spec issue
 	//                                  3 =>  snmp program issue
 
-	// ************** rfc4318 **************
+	// ************** rfc4750 **************
+	// ospfGeneralGroup (14.1)
+	ospfRouterID                 = mib2Prefix + "14.1.1@s-s"
+	ospfAdminStat                = mib2Prefix + "14.1.2@i-s"
+	ospfVersionNumber            = mib2Prefix + "14.1.3@i"
+	ospfAreaBdrRtrStatus         = mib2Prefix + "14.1.4@i"
+	ospfASBdrRtrStatus           = mib2Prefix + "14.1.5@i-s"
+	ospfExternLsaCount           = mib2Prefix + "14.1.6@i"
+	ospfExternLsaCksumSum        = mib2Prefix + "14.1.7@i"
+	ospfTOSSupport               = mib2Prefix + "14.1.8@i-s"
+	ospfOriginateNewLsas         = mib2Prefix + "14.1.9@i"
+	ospfRxNewLsas                = mib2Prefix + "14.1.10@i"
+	ospfExtLsdbLimit             = mib2Prefix + "14.1.11@i-s"
+	ospfMulticastExtensions      = mib2Prefix + "14.1.12@i-s"
+	ospfExitOverflowInterval     = mib2Prefix + "14.1.13@i-s"
+	ospfDemandExtensions         = mib2Prefix + "14.1.14@i-s"
+	ospfRFC1583Compatibility     = mib2Prefix + "14.1.15@i-s"
+	ospfOpaqueLsaSupport         = mib2Prefix + "14.1.16@i"
+	ospfReferenceBandwidth       = mib2Prefix + "14.1.17@i-s"
+	ospfRestartSupport           = mib2Prefix + "14.1.18@i-s"
+	ospfRestartInterval          = mib2Prefix + "14.1.19@i-s"
+	ospfRestartStrictLsaChecking = mib2Prefix + "14.1.20@i-s"
+	ospfRestartStatus            = mib2Prefix + "14.1.21@i"
+	ospfRestartAge               = mib2Prefix + "14.1.22@i"
+	ospfRestartExitReason        = mib2Prefix + "14.1.23@i"
+	ospfAsLsaCount               = mib2Prefix + "14.1.24@i"
+	ospfAsLsaCksumSum            = mib2Prefix + "14.1.25@i"
+	ospfStubRouterSupport        = mib2Prefix + "14.1.26@i"
+	ospfStubRouterAdvertisement  = mib2Prefix + "14.1.27@i-s"
+	ospfDiscontinuityTime        = mib2Prefix + "14.1.28@i"
 
+	// ospfAreaTable (14.2)
+	// ospfAreaEntry (not-accessible)(14.2.1)
+	ospfAreaID                              = mib2Prefix + "14.2.1.1@s"
+	ospfAuthType                            = mib2Prefix + "14.2.1.2@i-s"
+	ospfImportAsExtern                      = mib2Prefix + "14.2.1.3@i-s"
+	ospfSpfRuns                             = mib2Prefix + "14.2.1.4@i"
+	ospfAreaBdrRtrCount                     = mib2Prefix + "14.2.1.5@i"
+	ospfAsBdrRtrCount                       = mib2Prefix + "14.2.1.6@i"
+	ospfAreaLsaCount                        = mib2Prefix + "14.2.1.7@i"
+	ospfAreaLsaCksumSum                     = mib2Prefix + "14.2.1.8@i"
+	ospfAreaSummary                         = mib2Prefix + "14.2.1.9@i-s"
+	ospfAreaStatus                          = mib2Prefix + "14.2.1.10@i-s"
+	ospfAreaNssaTranslatorRole              = mib2Prefix + "14.2.1.11@i-s"
+	ospfAreaNssaTranslatorState             = mib2Prefix + "14.2.1.12@i"
+	ospfAreaNssaTranslatorStabilityInterval = mib2Prefix + "14.2.1.13@i-s"
+	ospfAreaNssaTranslatorEvents            = mib2Prefix + "14.2.1.14@i"
+
+	// ospfStubAreaTable (14.3)
+	// ospfStubAreaEntry (not-accessible)(14.3.1)
+	ospfStubAreaID     = mib2Prefix + "14.3.1.1@s"
+	ospfStubTOS        = mib2Prefix + "14.3.1.2@i"
+	ospfStubMetric     = mib2Prefix + "14.3.1.3@i"
+	ospfStubStatus     = mib2Prefix + "14.3.1.4@i-s"
+	ospfStubMetricType = mib2Prefix + "14.3.1.5@i-s"
+
+	// ospfLsdbTable (14.4)
+	// ospfLsdbEntry (not-accessible)(14.4.1)
+	ospfLsdbAreaID        = mib2Prefix + "14.4.1.1@s"
+	ospfLsdbType          = mib2Prefix + "14.4.1.2@i"
+	ospfLsdbLsid          = mib2Prefix + "14.4.1.3@s"
+	ospfLsdbRouterID      = mib2Prefix + "14.4.1.4@s"
+	ospfLsdbSequence      = mib2Prefix + "14.4.1.5@i"
+	ospfLsdbAge           = mib2Prefix + "14.4.1.6@i"
+	ospfLsdbChecksum      = mib2Prefix + "14.4.1.7@i"
+	ospfLsdbAdvertisement = mib2Prefix + "14.4.1.8@s"
+
+	// ospfAreaRangeTable (14.5)
+	// ospfAreaRangeEntry (not-accessible)(14.5.1)
+	ospfAreaRangeAreaID = mib2Prefix + "14.5.1.1@s"
+	ospfAreaRangeNet    = mib2Prefix + "14.5.1.2@s"
+	ospfAreaRangeMask   = mib2Prefix + "14.5.1.3@s"
+	ospfAreaRangeStatus = mib2Prefix + "14.5.1.4@i-s"
+	ospfAreaRangeEffect = mib2Prefix + "14.5.1.6@i-s"
+
+	// ospfHostTable (14.6)
+	// ospfHostEntry (not-accessible)(14.6.1)
+	ospfHostIPAddress = mib2Prefix + "14.6.1.1@s"
+	ospfHostTOS       = mib2Prefix + "14.6.1.2@i"
+	ospfHostMetric    = mib2Prefix + "14.6.1.3@i"
+	ospfHostStatus    = mib2Prefix + "14.6.1.4@i-s"
+	ospfHostAreaID    = mib2Prefix + "14.6.1.5@s"
+	ospfHostCfgAreaID = mib2Prefix + "14.6.1.6@s-s"
+
+	// ospfIfTable (14.7)
+	// ospfIfEntry (not-accessible)(14.7.1)
+	ospfIfIPAddress                = mib2Prefix + "14.7.1.1@s"
+	ospfAddressLessIf              = mib2Prefix + "14.7.1.2@i"
+	ospfIfAreaID                   = mib2Prefix + "14.7.1.3@s-s"
+	ospfIfType                     = mib2Prefix + "14.7.1.4@i-s"
+	ospfIfAdminStat                = mib2Prefix + "14.7.1.5@i-s"
+	ospfIfRtrPriority              = mib2Prefix + "14.7.1.6@i-s"
+	ospfIfTransitDelay             = mib2Prefix + "14.7.1.7@i-s"
+	ospfIfRetransInterval          = mib2Prefix + "14.7.1.8@i-s"
+	ospfIfHelloInterval            = mib2Prefix + "14.7.1.9@i-s"
+	ospfIfRtrDeadInterval          = mib2Prefix + "14.7.1.10@i-s"
+	ospfIfPollInterval             = mib2Prefix + "14.7.1.11@i-s"
+	ospfIfState                    = mib2Prefix + "14.7.1.12@i"
+	ospfIfDesignatedRouter         = mib2Prefix + "14.7.1.13@s"
+	ospfIfBackupDesignatedRouter   = mib2Prefix + "14.7.1.14@s"
+	ospfIfEvents                   = mib2Prefix + "14.7.1.15@i"
+	ospfIfAuthKey                  = mib2Prefix + "14.7.1.16@s-s"
+	ospfIfStatus                   = mib2Prefix + "14.7.1.17@i-s"
+	ospfIfMulticastForwarding      = mib2Prefix + "14.7.1.18@i-s"
+	ospfIfDemand                   = mib2Prefix + "14.7.1.19@i-s"
+	ospfIfAuthType                 = mib2Prefix + "14.7.1.20@i-s"
+	ospfIfLsaCount                 = mib2Prefix + "14.7.1.21@i"
+	ospfIfLsaCksumSum              = mib2Prefix + "14.7.1.22@i"
+	ospfIfDesignatedRouterID       = mib2Prefix + "14.7.1.23@s"
+	ospfIfBackupDesignatedRouterID = mib2Prefix + "14.7.1.24@s"
+
+	// ospfIfMetricTable (14.8)
+	// ospfIfMetricEntry (not-accessible)(14.8.1)
+	ospfIfMetricIPAddress     = mib2Prefix + "14.8.1.1@s"
+	ospfIfMetricAddressLessIf = mib2Prefix + "14.8.1.2@i"
+	ospfIfMetricTOS           = mib2Prefix + "14.8.1.3@i"
+	ospfIfMetricValue         = mib2Prefix + "14.8.1.4@i-s"
+	ospfIfMetricStatus        = mib2Prefix + "14.8.1.5@i-s"
+
+	// ospfVirtIfTable (14.9)
+	// ospfVirtIfEntry (not-accessible)(14.9.1)
+	ospfVirtIfAreaID          = mib2Prefix + "14.9.1.1@s"
+	ospfVirtIfNeighbor        = mib2Prefix + "14.9.1.2@s"
+	ospfVirtIfTransitDelay    = mib2Prefix + "14.9.1.3@i-s"
+	ospfVirtIfRetransInterval = mib2Prefix + "14.9.1.4@i-s"
+	ospfVirtIfHelloInterval   = mib2Prefix + "14.9.1.5@i-s"
+	ospfVirtIfRtrDeadInterval = mib2Prefix + "14.9.1.6@i-s"
+	ospfVirtIfState           = mib2Prefix + "14.9.1.7@i-s"
+	ospfVirtIfEvents          = mib2Prefix + "14.9.1.8@i"
+	ospfVirtIfAuthKey         = mib2Prefix + "14.9.1.9@s-s"
+	ospfVirtIfStatus          = mib2Prefix + "14.9.1.10@i-s"
+	ospfVirtIfAuthType        = mib2Prefix + "14.9.1.11@i-s"
+	ospfVirtIfLsaCount        = mib2Prefix + "14.9.1.12@i"
+	ospfVirtIfLsaCksumSum     = mib2Prefix + "14.9.1.13@i"
+
+	// ************** rfc4750 **************
+
+	// ************** rfc4318 **************
 	// RFC 4318 starts
-	dot1dStpVersion     = rfc4318Prefix + "17.2.16@i-s"
-	dot1dStpTxHoldCount = rfc4318Prefix + "17.2.17@i-s"
+	dot1dStpVersion     = mib2Prefix + "17.2.16@i-s"
+	dot1dStpTxHoldCount = mib2Prefix + "17.2.17@i-s"
 	// dot1dStpExtPortTable (17.2.19)
 	// dot1dStpExtPortEntry (not-accessible)(17.2.19.1)
-	dot1dStpPortProtocolMigration = rfc4318Prefix + "17.2.19.1.1@i-s"
-	dot1dStpPortAdminEdgePort     = rfc4318Prefix + "17.2.19.1.2@i-s"
-	dot1dStpPortOperEdgePort      = rfc4318Prefix + "17.2.19.1.3@i"
-	dot1dStpPortAdminPointToPoint = rfc4318Prefix + "17.2.19.1.4@i-s"
-	dot1dStpPortOperPointToPoint  = rfc4318Prefix + "17.2.19.1.5@i"
-	dot1dStpPortAdminPathCost     = rfc4318Prefix + "17.2.19.1.6@i-s"
+	dot1dStpPortProtocolMigration = mib2Prefix + "17.2.19.1.1@i-s-w"
+	dot1dStpPortAdminEdgePort     = mib2Prefix + "17.2.19.1.2@i-s-w"
+	dot1dStpPortOperEdgePort      = mib2Prefix + "17.2.19.1.3@i-w"
+	dot1dStpPortAdminPointToPoint = mib2Prefix + "17.2.19.1.4@i-s-w"
+	dot1dStpPortOperPointToPoint  = mib2Prefix + "17.2.19.1.5@i-w"
+	dot1dStpPortAdminPathCost     = mib2Prefix + "17.2.19.1.6@i-s-w"
 
 	// Following 2 don't have the data type in rfc4318 yet
-	rstpNotifications = rfc4318Prefix + "134.0@i"
-	rstpObjects       = rfc4318Prefix + "134.1@i"
+	rstpNotifications = mib2Prefix + "134.0@i"
+	rstpObjects       = mib2Prefix + "134.1@i"
 
 	// Following 2 are the OBJECT-GROUP type, need details
 	// rstpGroups (134.2.1)
-	rstpBridgeGroup = rfc4318Prefix + "134.2.1.1@i"
-	rstpPortGroup   = rfc4318Prefix + "134.2.1.1@i"
+	rstpBridgeGroup = mib2Prefix + "134.2.1.1@i"
+	rstpPortGroup   = mib2Prefix + "134.2.1.1@i"
 
 	// rstpCompliances (134.2.2)
-	rstpCompliance = rfc4318Prefix + "134.2.2.1@i"
+	rstpCompliance = mib2Prefix + "134.2.2.1@i"
 	// ************** rfc4318 **************
 
 	// ************** Private MIB *********************
 	// SYSTEM (1)
-	systemName           = oidPrefix + "1.1.0@s-s"
-	systemLocation       = oidPrefix + "1.2.0@s-s"
-	systemContact        = oidPrefix + "1.3.0@s-s"
-	systemDescr          = oidPrefix + "1.4.0@s-s"
-	systemFwVersion      = oidPrefix + "1.5.0@s"
-	systemMacaddress     = oidPrefix + "1.6.0@s"
-	systemAutoLogoutTime = oidPrefix + "1.7.0@i-s"
-	systemSerialNum      = oidPrefix + "1.8.0@i"
+	systemName           = privateMibOid + "1.1.0@s-s"
+	systemLocation       = privateMibOid + "1.2.0@s-s"
+	systemContact        = privateMibOid + "1.3.0@s-s"
+	systemDescr          = privateMibOid + "1.4.0@s-s"
+	systemFwVersion      = privateMibOid + "1.5.0@s"
+	systemMacaddress     = privateMibOid + "1.6.0@s"
+	systemAutoLogoutTime = privateMibOid + "1.7.0@i-s"
+	systemSerialNum      = privateMibOid + "1.8.0@i"
 
 	// Setting(2)
-	vlanPortCfgNum           = oidPrefix + "2.1.1.1.1@i-w"
-	vlanMembers              = oidPrefix + "2.1.1.1.2@s-w"
-	vlanTags                 = oidPrefix + "2.1.1.1.3@s-w-m:1"
-	pvidCfgNum               = oidPrefix + "2.1.2.1.1@i-w"
-	vlanPvid                 = oidPrefix + "2.1.2.1.2@i-w-s"
-	vlanFrameType            = oidPrefix + "2.1.2.1.3@i-w-s"
-	mvrCfgNum                = oidPrefix + "2.2.1.1.1@i-w-m:2" // Mvr (2.2)
-	mvrCfgVid                = oidPrefix + "2.2.1.1.2@i-w-"
-	mvrIPAddr                = oidPrefix + "2.2.1.1.3@s-w"
-	mvrMembers               = oidPrefix + "2.2.1.1.4@s-w"
-	igmpEnableQuerier        = oidPrefix + "2.3.1.0@i-s" // Igmp (2.3)
-	igmpQuerierVersion       = oidPrefix + "2.3.2.0@i-s"
-	igmpEnableSnooping       = oidPrefix + "2.3.3.0@i-s"
-	igmpEnableFloodWellKnown = oidPrefix + "2.3.4.0@i-s"
-	igmpPortNum              = oidPrefix + "2.3.5.1.1@i-w" // IgmpRouterTable (2.3.5)
-	igmpRouterStatus         = oidPrefix + "2.3.5.1.2@i-w-s"
-	igmpFastLeaveStatus      = oidPrefix + "2.3.5.1.3@i-w-s"
-	igmpVidNum               = oidPrefix + "2.3.6.1.1@i-w" // IgmpStatisticsTable (2.3.6)
-	igmpStatusQuerier        = oidPrefix + "2.3.6.1.2@s-w"
-	igmpQuerierTx            = oidPrefix + "2.3.6.1.3@i-w"
-	igmpQuerierRx            = oidPrefix + "2.3.6.1.4@i-w"
-	igmpV1Rx                 = oidPrefix + "2.3.6.1.5@i-w"
-	igmpV2Rx                 = oidPrefix + "2.3.6.1.6@i-w"
-	igmpV3Rx                 = oidPrefix + "2.3.6.1.7@i-w"
-	igmpV2Leave              = oidPrefix + "2.3.6.1.8@i-w"
-	igmpEntriesEntryIndex    = oidPrefix + "2.3.7.1.1@s-w" // IgmpEntriesTable (2.3.7)
-	igmpEntriesEntryIPAddr   = oidPrefix + "2.3.7.1.2@s-w"
-	igmpEntriesEntryVID      = oidPrefix + "2.3.7.1.3@i-w"
-	igmpEntriesEntryMembers  = oidPrefix + "2.3.7.1.4@i-w"
+	vlanPortCfgNum           = privateMibOid + "2.1.1.1.1@i-w"
+	vlanMembers              = privateMibOid + "2.1.1.1.2@s-w"
+	vlanTags                 = privateMibOid + "2.1.1.1.3@s-w-m:1"
+	pvidCfgNum               = privateMibOid + "2.1.2.1.1@i-w"
+	vlanPvid                 = privateMibOid + "2.1.2.1.2@i-w-s"
+	vlanFrameType            = privateMibOid + "2.1.2.1.3@i-w-s"
+	mvrCfgNum                = privateMibOid + "2.2.1.1.1@i-w-m:2" // Mvr (2.2)
+	mvrCfgVid                = privateMibOid + "2.2.1.1.2@i-w-"
+	mvrIPAddr                = privateMibOid + "2.2.1.1.3@s-w"
+	mvrMembers               = privateMibOid + "2.2.1.1.4@s-w"
+	igmpEnableQuerier        = privateMibOid + "2.3.1.0@i-s" // Igmp (2.3)
+	igmpQuerierVersion       = privateMibOid + "2.3.2.0@i-s"
+	igmpEnableSnooping       = privateMibOid + "2.3.3.0@i-s"
+	igmpEnableFloodWellKnown = privateMibOid + "2.3.4.0@i-s"
+	igmpPortNum              = privateMibOid + "2.3.5.1.1@i-w" // IgmpRouterTable (2.3.5)
+	igmpRouterStatus         = privateMibOid + "2.3.5.1.2@i-w-s"
+	igmpFastLeaveStatus      = privateMibOid + "2.3.5.1.3@i-w-s"
+	igmpVidNum               = privateMibOid + "2.3.6.1.1@i-w" // IgmpStatisticsTable (2.3.6)
+	igmpStatusQuerier        = privateMibOid + "2.3.6.1.2@s-w"
+	igmpQuerierTx            = privateMibOid + "2.3.6.1.3@i-w"
+	igmpQuerierRx            = privateMibOid + "2.3.6.1.4@i-w"
+	igmpV1Rx                 = privateMibOid + "2.3.6.1.5@i-w"
+	igmpV2Rx                 = privateMibOid + "2.3.6.1.6@i-w"
+	igmpV3Rx                 = privateMibOid + "2.3.6.1.7@i-w"
+	igmpV2Leave              = privateMibOid + "2.3.6.1.8@i-w"
+	igmpEntriesEntryIndex    = privateMibOid + "2.3.7.1.1@s-w" // IgmpEntriesTable (2.3.7)
+	igmpEntriesEntryIPAddr   = privateMibOid + "2.3.7.1.2@s-w"
+	igmpEntriesEntryVID      = privateMibOid + "2.3.7.1.3@i-w"
+	igmpEntriesEntryMembers  = privateMibOid + "2.3.7.1.4@i-w"
 
 	// Status (3)
-	lldpPortNum     = oidPrefix + "3.1.1.1.1@i-w" // LLDPInfo (3.1)
-	lldpInfoContent = oidPrefix + "3.1.1.1.2@s-w-m:1"
+	lldpPortNum     = privateMibOid + "3.1.1.1.1@i-w" // LLDPInfo (3.1)
+	lldpInfoContent = privateMibOid + "3.1.1.1.2@s-w-m:1"
 
 	// Warning (11)
-	faultAlarmPowerCfgNum        = oidPrefix + "11.1.1.1.1@i-w-m:3" // FaultAlarm (11.1)
-	faultAlarmPowerStatus        = oidPrefix + "11.1.1.1.2@i-w-s-m:3"
-	faultAlarmPortCfgNum         = oidPrefix + "11.1.2.1.1@i-w-m:3"
-	faultAlarmPortLinkStatus     = oidPrefix + "11.1.2.1.2@i-w-s-m:3" // ===============================> here
-	eventDDMEnabled              = oidPrefix + "11.2.1.1.0@i-s-m:3"   // EventDDMEnabled (11.2.1)
-	eventDDMTemperatureLower     = oidPrefix + "11.2.1.2.0@s-s-m:3"
-	eventDDMTemperatureUpper     = oidPrefix + "11.2.1.3.0@s-s-m:3"
-	eventDDMVoltageLower         = oidPrefix + "11.2.1.4.0@s-s-m:3"
-	eventDDMVoltageUpper         = oidPrefix + "11.2.1.5.0@s-s-m:3"
-	eventDDMTxBiasLower          = oidPrefix + "11.2.1.6.0@s-s-m:3"
-	eventDDMTTxBiasUpper         = oidPrefix + "11.2.1.7.0@s-s-m:3"
-	eventDDMTxPowerLower         = oidPrefix + "11.2.1.8.0@s-s-m:3"
-	eventDDMTxPowerUpper         = oidPrefix + "11.2.1.9.0@s-s-m:3"
-	eventDDMRxPowerLower         = oidPrefix + "11.2.1.10.0@s-s-m:3"
-	eventDDMRxPowerUpper         = oidPrefix + "11.2.1.11.0@s-s-m:3"
-	eventMonitorEnabled          = oidPrefix + "11.2.2.1.0@i-s-m:3" // EventMonitor (11.2.1)
-	eventMonitorTemperatureLower = oidPrefix + "11.2.2.2.0@s-s-m:3"
-	eventMonitorTemperatureUpper = oidPrefix + "11.2.2.3.0@s-s-m:3"
-	eventMonitorVoltageLower     = oidPrefix + "11.2.2.4.0@s-s-m:3"
-	eventMonitorVoltageUpper     = oidPrefix + "11.2.2.5.0@s-s-m:3"
-	eventMonitorCurrentLower     = oidPrefix + "11.2.2.6.0@s-s-m:3"
-	eventMonitorCurrentUpper     = oidPrefix + "11.2.2.7.0@s-s-m:3"
-	eventMonitorPowerLower       = oidPrefix + "11.2.2.8.0@s-s-m:3"
-	eventMonitorPowerUpper       = oidPrefix + "11.2.2.9.0@s-s-m:3"
-	eventPOEAPortCfgNum          = oidPrefix + "11.2.3.1.1.1@i-w" // EventPOEA (11.2.3)
-	eventPOEAPingEnabled         = oidPrefix + "11.2.3.1.1.2@i-w-s"
-	eventPOEAPingIPAddr          = oidPrefix + "11.2.3.1.1.3@s-s-m:1"
-	eventPOEAPingInterval        = oidPrefix + "11.2.3.1.1.4@i-s-m:3"
-	eventPOEAPingRetry           = oidPrefix + "11.2.3.1.1.5@i-s-m:3"
-	eventPOEAPingReboot          = oidPrefix + "11.2.3.1.1.6@i-s-m:3"
-	eventPOEAPingFailAction      = oidPrefix + "11.2.3.1.1.7@i-s-m:3"
-	localLogEnable               = oidPrefix + "11.3.1.1.0@i-s-m:3" // ActionConfiguration (11.3)
-	remoteSystemLogCfgNum        = oidPrefix + "11.3.2.1.1.1@i-m:3" // RemoteSystemLog (11.3.2)
-	remoteSystemLogHost          = oidPrefix + "11.3.2.1.1.2@ip-m:3"
-	remoteSystemLogTag           = oidPrefix + "11.3.2.1.1.3@s-m:3"
-	remoteSystemLogFacility      = oidPrefix + "11.3.2.1.1.4@s-m:3"
-	remoteSystemLogHostName      = oidPrefix + "11.3.2.1.1.5@s-m:3"
-	// emailEnable                  = oidPrefix + "11.3.3.1.0@i-s-m:3"   // email (11.3.3.1) email is always enable, so no need to check
-	emailServerUser      = oidPrefix + "11.3.3.2.1.0@s-s-m:3" // emailServer (11.3.3.2)
-	emailServerPassword  = oidPrefix + "11.3.3.2.2.0@s-s-m:3"
-	emailServerHost      = oidPrefix + "11.3.3.2.3.0@s-s-m:3"
-	emailServerSSLEnable = oidPrefix + "11.3.3.2.4.0@i-s-m:3"
-	emailSender          = oidPrefix + "11.3.3.3.0@s-s-m:3"
-	emailSubject         = oidPrefix + "11.3.3.4.0@-s-m:3"
-	emailCloudEnable     = oidPrefix + "11.3.3.5.0@i-s-m:3"
-	emailReceiverCfgNum  = oidPrefix + "11.3.3.6.1.1@i-m:3"
-	emailReceiverHost    = oidPrefix + "11.3.3.6.1.2@s-m:3"
-	// smsEnable                    = oidPrefix + "11.3.4.1.0@i-s-m:3" // SMS (11.3.4)
-	smsUser     = oidPrefix + "11.3.4.2.0@s-s-m:3"
-	smsPassword = oidPrefix + "11.3.4.3.0@s-s-m:3"
-	// smsSenderText              = oidPrefix + "11.3.4.4.0@s-s-m:3"   // no more senderText
-	smsReceiverCfgNum          = oidPrefix + "11.3.4.5.1.1@i-m:3"
-	smsReceiverPhone           = oidPrefix + "11.3.4.5.1.2@s-m:3"
-	snmpResponseLocale         = oidPrefix + "11.3.5.1.1.0@i-s-m:3" // Snmp (11.3.5)
-	snmpCommunityCfgNum        = oidPrefix + "11.3.5.1.2.1.1@i-m:3"
-	snmpCommunityCfgString     = oidPrefix + "11.3.5.1.2.1.2@s-m:3"
-	snmpCommunityCfgReadOnly   = oidPrefix + "11.3.5.1.2.1.3@i-m:3"
-	snmpTrapCfgNum             = oidPrefix + "11.3.5.2.1.1.1@i-m:3" // Trap (11.3.5.2)
-	snmpTrapCfgCommunity       = oidPrefix + "11.3.5.2.1.1.2@s-m:3"
-	snmpTrapCfgIPAddress       = oidPrefix + "11.3.5.2.1.1.3@ip-m:3"
-	snmpTrapCfgVersion         = oidPrefix + "11.3.5.2.1.1.4@i-m:3"
-	snmpV3UserCfgNum           = oidPrefix + "11.3.5.3.1.1.1@i-m:3" // V3User (11.3.5.3)
-	snmpV3UserCfgName          = oidPrefix + "11.3.5.3.1.1.2@s-m:3"
-	snmpV3UserCfgSecurityLevel = oidPrefix + "11.3.5.3.1.1.3@i-m:3"
-	snmpV3UserCfgAuthProtocal  = oidPrefix + "11.3.5.3.1.1.4@i-m:3"
-	snmpV3UserCfgAuthPassword  = oidPrefix + "11.3.5.3.1.1.5@s-m:3"
-	snmpV3UserCfgPrivProtocal  = oidPrefix + "11.3.5.3.1.1.6@s-m:3"
-	snmpV3UserCfgPrivPassword  = oidPrefix + "11.3.5.3.1.1.7@s-m:3"
-	doutCfgNum                 = oidPrefix + "11.3.6.1.1.1@i-m:3" // Dout (11.3.6)
-	doutCfgEnable              = oidPrefix + "11.3.6.1.1.2@i-s-m:3"
-	doutCfgAction              = oidPrefix + "11.3.6.1.1.3@i-s-m:3"
-	deviceBootEvent            = oidPrefix + "11.4.1.1.0@i-s-m:3" // EventActionMap (11.4.1.1)
-	authenticationFailureEvent = oidPrefix + "11.4.1.2.0@i-s-m:3"
-	authenticationSuccessEvent = oidPrefix + "11.4.1.3.0@i-s-m:3"
-	deviceDDMEvent             = oidPrefix + "11.4.1.4.0@i-s-m:3"
-	devicePOEEvent             = oidPrefix + "11.4.1.5.0@i-s-m:3"
-	devicePOEBEvent            = oidPrefix + "11.4.1.6.0@i-s-m:3"
-	ringTopologyChangeEvent    = oidPrefix + "11.4.1.7.0@i-s-m:3"
-	envMonitorEvent            = oidPrefix + "11.4.1.8.0@i-s-m:3"
-	eventPortNumber            = oidPrefix + "11.4.2.1.1.1@i-m:3" // PortsEvent (11.4.2)
-	eventPortEventLog          = oidPrefix + "11.4.2.1.1.2@i-s-m:3"
-	eventPortEventsms          = oidPrefix + "11.4.2.1.1.3@i-s-m:3"
-	eventPortEventSMTP         = oidPrefix + "11.4.2.1.1.4@i-s-m:3"
-	eventPortEventsnmpTRAP     = oidPrefix + "11.4.2.1.1.5@i-s-m:3"
-	eventPortEventdout1        = oidPrefix + "11.4.2.1.1.6@i-s-m:3"
-	eventPortEventdout2        = oidPrefix + "11.4.2.1.1.7@i-s-m:3"
-	eventPowerNumber           = oidPrefix + "11.4.3.1.1.1@i-m:3" // PowerEvent (11.4.3)
-	eventPowerEventLog         = oidPrefix + "11.4.3.1.1.2@i-s-m:3"
-	eventPowerEventsms         = oidPrefix + "11.4.3.1.1.3@i-s-m:3"
-	eventPowerEventSMTP        = oidPrefix + "11.4.3.1.1.4@i-s-m:3"
-	eventPowerEventsnmpTRAP    = oidPrefix + "11.4.3.1.1.5@i-s-m:3"
-	eventPowerEventdout1       = oidPrefix + "11.4.3.1.1.6@i-s-m:3"
-	eventPowerEventdout2       = oidPrefix + "11.4.3.1.1.7@i-s-m:3"
-	eventDiNumber              = oidPrefix + "11.4.4.1.1.1@i-m:3" // DiEvent (11.4.4)
-	eventDiEventLog            = oidPrefix + "11.4.4.1.1.2@i-s-m:3"
-	eventDiEventsms            = oidPrefix + "11.4.4.1.1.3@i-s-m:3"
-	eventDiEventSMTP           = oidPrefix + "11.4.4.1.1.4@i-s-m:3"
-	eventDiEventsnmpTRAP       = oidPrefix + "11.4.4.1.1.5@i-s-m:3"
-	eventDiEventdout1          = oidPrefix + "11.4.4.1.1.6@i-s-m:3"
-	eventDiEventdout2          = oidPrefix + "11.4.4.1.1.7@i-s-m:3"
+	faultAlarmPowerCfgNum        = privateMibOid + "11.1.1.1.1@i-w-m:3" // FaultAlarm (11.1)
+	faultAlarmPowerStatus        = privateMibOid + "11.1.1.1.2@i-w-s-m:3"
+	faultAlarmPortCfgNum         = privateMibOid + "11.1.2.1.1@i-w-m:3"
+	faultAlarmPortLinkStatus     = privateMibOid + "11.1.2.1.2@i-w-s-m:3" // ===============================> here
+	eventDDMEnabled              = privateMibOid + "11.2.1.1.0@i-s-m:3"   // EventDDMEnabled (11.2.1)
+	eventDDMTemperatureLower     = privateMibOid + "11.2.1.2.0@s-s-m:3"
+	eventDDMTemperatureUpper     = privateMibOid + "11.2.1.3.0@s-s-m:3"
+	eventDDMVoltageLower         = privateMibOid + "11.2.1.4.0@s-s-m:3"
+	eventDDMVoltageUpper         = privateMibOid + "11.2.1.5.0@s-s-m:3"
+	eventDDMTxBiasLower          = privateMibOid + "11.2.1.6.0@s-s-m:3"
+	eventDDMTTxBiasUpper         = privateMibOid + "11.2.1.7.0@s-s-m:3"
+	eventDDMTxPowerLower         = privateMibOid + "11.2.1.8.0@s-s-m:3"
+	eventDDMTxPowerUpper         = privateMibOid + "11.2.1.9.0@s-s-m:3"
+	eventDDMRxPowerLower         = privateMibOid + "11.2.1.10.0@s-s-m:3"
+	eventDDMRxPowerUpper         = privateMibOid + "11.2.1.11.0@s-s-m:3"
+	eventMonitorEnabled          = privateMibOid + "11.2.2.1.0@i-s-m:3" // EventMonitor (11.2.1)
+	eventMonitorTemperatureLower = privateMibOid + "11.2.2.2.0@s-s-m:3"
+	eventMonitorTemperatureUpper = privateMibOid + "11.2.2.3.0@s-s-m:3"
+	eventMonitorVoltageLower     = privateMibOid + "11.2.2.4.0@s-s-m:3"
+	eventMonitorVoltageUpper     = privateMibOid + "11.2.2.5.0@s-s-m:3"
+	eventMonitorCurrentLower     = privateMibOid + "11.2.2.6.0@s-s-m:3"
+	eventMonitorCurrentUpper     = privateMibOid + "11.2.2.7.0@s-s-m:3"
+	eventMonitorPowerLower       = privateMibOid + "11.2.2.8.0@s-s-m:3"
+	eventMonitorPowerUpper       = privateMibOid + "11.2.2.9.0@s-s-m:3"
+	eventPOEAPortCfgNum          = privateMibOid + "11.2.3.1.1.1@i-w" // EventPOEA (11.2.3)
+	eventPOEAPingEnabled         = privateMibOid + "11.2.3.1.1.2@i-w-s"
+	eventPOEAPingIPAddr          = privateMibOid + "11.2.3.1.1.3@s-s-m:1"
+	eventPOEAPingInterval        = privateMibOid + "11.2.3.1.1.4@i-s-m:3"
+	eventPOEAPingRetry           = privateMibOid + "11.2.3.1.1.5@i-s-m:3"
+	eventPOEAPingReboot          = privateMibOid + "11.2.3.1.1.6@i-s-m:3"
+	eventPOEAPingFailAction      = privateMibOid + "11.2.3.1.1.7@i-s-m:3"
+	localLogEnable               = privateMibOid + "11.3.1.1.0@i-s-m:3" // ActionConfiguration (11.3)
+	remoteSystemLogCfgNum        = privateMibOid + "11.3.2.1.1.1@i-m:3" // RemoteSystemLog (11.3.2)
+	remoteSystemLogHost          = privateMibOid + "11.3.2.1.1.2@ip-m:3"
+	remoteSystemLogTag           = privateMibOid + "11.3.2.1.1.3@s-m:3"
+	remoteSystemLogFacility      = privateMibOid + "11.3.2.1.1.4@s-m:3"
+	remoteSystemLogHostName      = privateMibOid + "11.3.2.1.1.5@s-m:3"
+	// emailEnable                  = privateMibOid + "11.3.3.1.0@i-s-m:3"   // email (11.3.3.1) email is always enable, so no need to check
+	emailServerUser      = privateMibOid + "11.3.3.2.1.0@s-s-m:3" // emailServer (11.3.3.2)
+	emailServerPassword  = privateMibOid + "11.3.3.2.2.0@s-s-m:3"
+	emailServerHost      = privateMibOid + "11.3.3.2.3.0@s-s-m:3"
+	emailServerSSLEnable = privateMibOid + "11.3.3.2.4.0@i-s-m:3"
+	emailSender          = privateMibOid + "11.3.3.3.0@s-s-m:3"
+	emailSubject         = privateMibOid + "11.3.3.4.0@-s-m:3"
+	emailCloudEnable     = privateMibOid + "11.3.3.5.0@i-s-m:3"
+	emailReceiverCfgNum  = privateMibOid + "11.3.3.6.1.1@i-m:3"
+	emailReceiverHost    = privateMibOid + "11.3.3.6.1.2@s-m:3"
+	// smsEnable                    = privateMibOid + "11.3.4.1.0@i-s-m:3" // SMS (11.3.4)
+	smsUser     = privateMibOid + "11.3.4.2.0@s-s-m:3"
+	smsPassword = privateMibOid + "11.3.4.3.0@s-s-m:3"
+	// smsSenderText              = privateMibOid + "11.3.4.4.0@s-s-m:3"   // no more senderText
+	smsReceiverCfgNum          = privateMibOid + "11.3.4.5.1.1@i-m:3"
+	smsReceiverPhone           = privateMibOid + "11.3.4.5.1.2@s-m:3"
+	snmpResponseLocale         = privateMibOid + "11.3.5.1.1.0@i-s-m:3" // Snmp (11.3.5)
+	snmpCommunityCfgNum        = privateMibOid + "11.3.5.1.2.1.1@i-m:3"
+	snmpCommunityCfgString     = privateMibOid + "11.3.5.1.2.1.2@s-m:3"
+	snmpCommunityCfgReadOnly   = privateMibOid + "11.3.5.1.2.1.3@i-m:3"
+	snmpTrapCfgNum             = privateMibOid + "11.3.5.2.1.1.1@i-m:3" // Trap (11.3.5.2)
+	snmpTrapCfgCommunity       = privateMibOid + "11.3.5.2.1.1.2@s-m:3"
+	snmpTrapCfgIPAddress       = privateMibOid + "11.3.5.2.1.1.3@ip-m:3"
+	snmpTrapCfgVersion         = privateMibOid + "11.3.5.2.1.1.4@i-m:3"
+	snmpV3UserCfgNum           = privateMibOid + "11.3.5.3.1.1.1@i-m:3" // V3User (11.3.5.3)
+	snmpV3UserCfgName          = privateMibOid + "11.3.5.3.1.1.2@s-m:3"
+	snmpV3UserCfgSecurityLevel = privateMibOid + "11.3.5.3.1.1.3@i-m:3"
+	snmpV3UserCfgAuthProtocal  = privateMibOid + "11.3.5.3.1.1.4@i-m:3"
+	snmpV3UserCfgAuthPassword  = privateMibOid + "11.3.5.3.1.1.5@s-m:3"
+	snmpV3UserCfgPrivProtocal  = privateMibOid + "11.3.5.3.1.1.6@s-m:3"
+	snmpV3UserCfgPrivPassword  = privateMibOid + "11.3.5.3.1.1.7@s-m:3"
+	doutCfgNum                 = privateMibOid + "11.3.6.1.1.1@i-m:3" // Dout (11.3.6)
+	doutCfgEnable              = privateMibOid + "11.3.6.1.1.2@i-s-m:3"
+	doutCfgAction              = privateMibOid + "11.3.6.1.1.3@i-s-m:3"
+	deviceBootEvent            = privateMibOid + "11.4.1.1.0@i-s-m:3" // EventActionMap (11.4.1.1)
+	authenticationFailureEvent = privateMibOid + "11.4.1.2.0@i-s-m:3"
+	authenticationSuccessEvent = privateMibOid + "11.4.1.3.0@i-s-m:3"
+	deviceDDMEvent             = privateMibOid + "11.4.1.4.0@i-s-m:3"
+	devicePOEEvent             = privateMibOid + "11.4.1.5.0@i-s-m:3"
+	devicePOEBEvent            = privateMibOid + "11.4.1.6.0@i-s-m:3"
+	ringTopologyChangeEvent    = privateMibOid + "11.4.1.7.0@i-s-m:3"
+	envMonitorEvent            = privateMibOid + "11.4.1.8.0@i-s-m:3"
+	eventPortNumber            = privateMibOid + "11.4.2.1.1.1@i-m:3" // PortsEvent (11.4.2)
+	eventPortEventLog          = privateMibOid + "11.4.2.1.1.2@i-s-m:3"
+	eventPortEventsms          = privateMibOid + "11.4.2.1.1.3@i-s-m:3"
+	eventPortEventSMTP         = privateMibOid + "11.4.2.1.1.4@i-s-m:3"
+	eventPortEventsnmpTRAP     = privateMibOid + "11.4.2.1.1.5@i-s-m:3"
+	eventPortEventdout1        = privateMibOid + "11.4.2.1.1.6@i-s-m:3"
+	eventPortEventdout2        = privateMibOid + "11.4.2.1.1.7@i-s-m:3"
+	eventPowerNumber           = privateMibOid + "11.4.3.1.1.1@i-m:3" // PowerEvent (11.4.3)
+	eventPowerEventLog         = privateMibOid + "11.4.3.1.1.2@i-s-m:3"
+	eventPowerEventsms         = privateMibOid + "11.4.3.1.1.3@i-s-m:3"
+	eventPowerEventSMTP        = privateMibOid + "11.4.3.1.1.4@i-s-m:3"
+	eventPowerEventsnmpTRAP    = privateMibOid + "11.4.3.1.1.5@i-s-m:3"
+	eventPowerEventdout1       = privateMibOid + "11.4.3.1.1.6@i-s-m:3"
+	eventPowerEventdout2       = privateMibOid + "11.4.3.1.1.7@i-s-m:3"
+	eventDiNumber              = privateMibOid + "11.4.4.1.1.1@i-m:3" // DiEvent (11.4.4)
+	eventDiEventLog            = privateMibOid + "11.4.4.1.1.2@i-s-m:3"
+	eventDiEventsms            = privateMibOid + "11.4.4.1.1.3@i-s-m:3"
+	eventDiEventSMTP           = privateMibOid + "11.4.4.1.1.4@i-s-m:3"
+	eventDiEventsnmpTRAP       = privateMibOid + "11.4.4.1.1.5@i-s-m:3"
+	eventDiEventdout1          = privateMibOid + "11.4.4.1.1.6@i-s-m:3"
+	eventDiEventdout2          = privateMibOid + "11.4.4.1.1.7@i-s-m:3"
 
 	// Monitoring (12)
-	envVoltage                     = oidPrefix + "12.1.1.0@s" // ENVMonitor (12.1)
-	envCurrent                     = oidPrefix + "12.1.2.0@s"
-	envWalt                        = oidPrefix + "12.1.3.0@s"
-	envTemperature                 = oidPrefix + "12.1.4.0@s"
-	ddmPortNumber                  = oidPrefix + "12.2.1.1.1@i-m:3" // DDM (12.2)
-	ddmTemperatureHighAlarm        = oidPrefix + "12.2.1.1.2@s-m:3"
-	ddmTemperatureHighWarning      = oidPrefix + "12.2.1.1.3@s-m:3"
-	ddmTemperatureCurrentValue     = oidPrefix + "12.2.1.1.4@s-m:3"
-	ddmTemperatureLowWarning       = oidPrefix + "12.2.1.1.5@s-m:3"
-	ddmTemperatureLowAlarm         = oidPrefix + "12.2.1.1.6@s-m:3"
-	ddmVccHighAlarm                = oidPrefix + "12.2.1.1.7@s-m:3"
-	ddmVccHighWarning              = oidPrefix + "12.2.1.1.8@s-m:3"
-	ddmVccCurrentValue             = oidPrefix + "12.2.1.1.9@s-m:3"
-	ddmVccLowWarning               = oidPrefix + "12.2.1.1.10@s-m:3"
-	ddmVccLowAlarm                 = oidPrefix + "12.2.1.1.11@s-m:3"
-	ddmBiasHighAlarm               = oidPrefix + "12.2.1.1.12@s-m:3"
-	ddmBiasHighWarning             = oidPrefix + "12.2.1.1.13@s-m:3"
-	ddmBiasCurrentValue            = oidPrefix + "12.2.1.1.14@s-m:3"
-	ddmBiasLowWarning              = oidPrefix + "12.2.1.1.15@s-m:3"
-	ddmBiasLowAlarm                = oidPrefix + "12.2.1.1.16@s-m:3"
-	ddmTxPowerHighAlarm            = oidPrefix + "12.2.1.1.17@s-m:3"
-	ddmTxPowerHighWarning          = oidPrefix + "12.2.1.1.18@s-m:3"
-	ddmTxPowerCurrentValue         = oidPrefix + "12.2.1.1.19@s-m:3"
-	ddmTxPowerLowWarning           = oidPrefix + "12.2.1.1.20@s-m:3"
-	ddmTxPowerLowAlarm             = oidPrefix + "12.2.1.1.21@s-m:3"
-	ddmRxPowerHighAlarm            = oidPrefix + "12.2.1.1.22@s-m:3"
-	ddmRxPowerHighWarning          = oidPrefix + "12.2.1.1.23@s-m:3"
-	ddmRxPowerCurrentValue         = oidPrefix + "12.2.1.1.24@s-m:3"
-	ddmRxPowerLowWarning           = oidPrefix + "12.2.1.1.25@s-m:3"
-	ddmRxPowerLowAlarm             = oidPrefix + "12.2.1.1.26@s-m:3"
-	monitorPowerNumber             = oidPrefix + "12.3.1.1.1@i-m:3" // PowerMonitor (12.3)
-	monitorPowerStatus             = oidPrefix + "12.3.1.1.2@i-m:3"
-	monitorPoEPortCfgNum           = oidPrefix + "12.4.1.1.1@i-w-m:3" // POEMonitor (12.4)
-	monitorPoEPortStatus           = oidPrefix + "12.4.1.1.2@s-w-m:3"
-	monitorPoEPortClass            = oidPrefix + "12.4.1.1.3@s-w-m:3"
-	monitorPoEPortPowerConsumption = oidPrefix + "12.4.1.1.4@s-w-m:3"
-	monitorPoEPortCurrent          = oidPrefix + "12.4.1.1.5@s-w-m:3"
-	monitorPoEPortVoltage          = oidPrefix + "12.4.1.1.6@s-w-m:3"
-	monitorPoEPortTemperature      = oidPrefix + "12.4.1.1.7@s-w-m:3"
-	cpuLoadingMonitor              = oidPrefix + "12.5.1.0@i" // CPULoadingMonitor (12.5)
+	envVoltage                     = privateMibOid + "12.1.1.0@s" // ENVMonitor (12.1)
+	envCurrent                     = privateMibOid + "12.1.2.0@s"
+	envWalt                        = privateMibOid + "12.1.3.0@s"
+	envTemperature                 = privateMibOid + "12.1.4.0@s"
+	ddmPortNumber                  = privateMibOid + "12.2.1.1.1@i-m:3" // DDM (12.2)
+	ddmTemperatureHighAlarm        = privateMibOid + "12.2.1.1.2@s-m:3"
+	ddmTemperatureHighWarning      = privateMibOid + "12.2.1.1.3@s-m:3"
+	ddmTemperatureCurrentValue     = privateMibOid + "12.2.1.1.4@s-m:3"
+	ddmTemperatureLowWarning       = privateMibOid + "12.2.1.1.5@s-m:3"
+	ddmTemperatureLowAlarm         = privateMibOid + "12.2.1.1.6@s-m:3"
+	ddmVccHighAlarm                = privateMibOid + "12.2.1.1.7@s-m:3"
+	ddmVccHighWarning              = privateMibOid + "12.2.1.1.8@s-m:3"
+	ddmVccCurrentValue             = privateMibOid + "12.2.1.1.9@s-m:3"
+	ddmVccLowWarning               = privateMibOid + "12.2.1.1.10@s-m:3"
+	ddmVccLowAlarm                 = privateMibOid + "12.2.1.1.11@s-m:3"
+	ddmBiasHighAlarm               = privateMibOid + "12.2.1.1.12@s-m:3"
+	ddmBiasHighWarning             = privateMibOid + "12.2.1.1.13@s-m:3"
+	ddmBiasCurrentValue            = privateMibOid + "12.2.1.1.14@s-m:3"
+	ddmBiasLowWarning              = privateMibOid + "12.2.1.1.15@s-m:3"
+	ddmBiasLowAlarm                = privateMibOid + "12.2.1.1.16@s-m:3"
+	ddmTxPowerHighAlarm            = privateMibOid + "12.2.1.1.17@s-m:3"
+	ddmTxPowerHighWarning          = privateMibOid + "12.2.1.1.18@s-m:3"
+	ddmTxPowerCurrentValue         = privateMibOid + "12.2.1.1.19@s-m:3"
+	ddmTxPowerLowWarning           = privateMibOid + "12.2.1.1.20@s-m:3"
+	ddmTxPowerLowAlarm             = privateMibOid + "12.2.1.1.21@s-m:3"
+	ddmRxPowerHighAlarm            = privateMibOid + "12.2.1.1.22@s-m:3"
+	ddmRxPowerHighWarning          = privateMibOid + "12.2.1.1.23@s-m:3"
+	ddmRxPowerCurrentValue         = privateMibOid + "12.2.1.1.24@s-m:3"
+	ddmRxPowerLowWarning           = privateMibOid + "12.2.1.1.25@s-m:3"
+	ddmRxPowerLowAlarm             = privateMibOid + "12.2.1.1.26@s-m:3"
+	monitorPowerNumber             = privateMibOid + "12.3.1.1.1@i-m:3" // PowerMonitor (12.3)
+	monitorPowerStatus             = privateMibOid + "12.3.1.1.2@i-m:3"
+	monitorPoEPortCfgNum           = privateMibOid + "12.4.1.1.1@i-w-m:3" // POEMonitor (12.4)
+	monitorPoEPortStatus           = privateMibOid + "12.4.1.1.2@s-w-m:3"
+	monitorPoEPortClass            = privateMibOid + "12.4.1.1.3@s-w-m:3"
+	monitorPoEPortPowerConsumption = privateMibOid + "12.4.1.1.4@s-w-m:3"
+	monitorPoEPortCurrent          = privateMibOid + "12.4.1.1.5@s-w-m:3"
+	monitorPoEPortVoltage          = privateMibOid + "12.4.1.1.6@s-w-m:3"
+	monitorPoEPortTemperature      = privateMibOid + "12.4.1.1.7@s-w-m:3"
+	cpuLoadingMonitor              = privateMibOid + "12.5.1.0@i" // CPULoadingMonitor (12.5)
 
 	// SaveConfiguration (13)
-	saveCfgMgtAction = oidPrefix + "13.1.0@s-s" // the value type to set is integer, but get will be string, set it string for now
+	saveCfgMgtAction = privateMibOid + "13.1.0@s-s" // the value type to set is integer, but get will be string, set it string for now
 
 	// FactoryDefault (14)
-	factoryDefaultAction = oidPrefix + "14.1.0@s-s" // the value type to set is integer, but get will be string, set it string for now
+	factoryDefaultAction = privateMibOid + "14.1.0@s-s" // the value type to set is integer, but get will be string, set it string for now
 
 	// SystemReboot (15)
-	systemRebootAction = oidPrefix + "15.1.0@s-s" // the value type to set is integer, but get will be string, set it string for now
+	systemRebootAction = privateMibOid + "15.1.0@s-s" // the value type to set is integer, but get will be string, set it string for now
 
 	// Maintenance (16)
-	importConfiguration = oidPrefix + "16.1.0@s-s"
-	upgrade             = oidPrefix + "16.2.0@s-s"
+	importConfiguration = privateMibOid + "16.1.0@s-s"
+	upgrade             = privateMibOid + "16.2.0@s-s"
 
 	// ************** Private MIB *********************
 )
@@ -339,6 +476,10 @@ func isWalk(t *Task) bool {
 	return t.taskType == typeWalk || t.taskType == typeWalkSet
 }
 
+func isSet(t *Task) bool {
+	return t.taskType == typeWalkSet || t.taskType == typeSet
+}
+
 func taskTranslator(typeInt int) string {
 	if typeInt == typeGet {
 		return "get"
@@ -369,7 +510,6 @@ type Task struct {
 	rawResultAfterDefault string
 	testSuccess           string
 	failedReason          string
-	ps                    string
 	failedtype            string
 }
 
@@ -460,12 +600,12 @@ func (t *Task) Init(taskName, oid string) {
 
 	// parse oid
 	oid = rmPostFix(oid)
-	if strings.Contains(oid, oidPrefix) {
-		// private oidPrefix
-		t.oid = strings.Split(oid, oidPrefix)[1]
-	} else if strings.Contains(oid, rfc4318Prefix) {
+	if strings.Contains(oid, privateMibOid) {
+		// private privateMibOid
+		t.oid = strings.Split(oid, privateMibOid)[1]
+	} else if strings.Contains(oid, mib2Prefix) {
 		// rfc4318 oid prefix
-		t.oid = strings.Split(oid, rfc4318Prefix)[1]
+		t.oid = strings.Split(oid, mib2Prefix)[1]
 	}
 
 	// parse cmd
@@ -591,16 +731,15 @@ func init() {
 	testValMap = make(map[string]string)
 	testValMap["string"] = "testWalter"
 	testValMap["integer"] = "20"
-	testValMap["ipaddress"] = "192.168.1.1"
 
 	// RFC 4318 starts
-	taskEntry = append(taskEntry, genTask("dot1dStpVersion", dot1dStpVersion))
-	taskEntry = append(taskEntry, genTask("dot1dStpTxHoldCount", dot1dStpTxHoldCount))
-	taskEntry = append(taskEntry, genTask("dot1dStpPortProtocolMigration", dot1dStpPortProtocolMigration))
-	taskEntry = append(taskEntry, genTask("dot1dStpPortAdminEdgePort", dot1dStpPortAdminEdgePort))
-	taskEntry = append(taskEntry, genTask("dot1dStpPortOperEdgePort", dot1dStpPortOperEdgePort))
-	taskEntry = append(taskEntry, genTask("dot1dStpPortAdminPointToPoint", dot1dStpPortAdminPointToPoint))
-	taskEntry = append(taskEntry, genTask("dot1dStpPortOperPointToPoint", dot1dStpPortOperPointToPoint))
+	// taskEntry = append(taskEntry, genTask("dot1dStpVersion", dot1dStpVersion))
+	// taskEntry = append(taskEntry, genTask("dot1dStpTxHoldCount", dot1dStpTxHoldCount))
+	// taskEntry = append(taskEntry, genTask("dot1dStpPortProtocolMigration", dot1dStpPortProtocolMigration))
+	// taskEntry = append(taskEntry, genTask("dot1dStpPortAdminEdgePort", dot1dStpPortAdminEdgePort))
+	// taskEntry = append(taskEntry, genTask("dot1dStpPortOperEdgePort", dot1dStpPortOperEdgePort))
+	// taskEntry = append(taskEntry, genTask("dot1dStpPortAdminPointToPoint", dot1dStpPortAdminPointToPoint))
+	// taskEntry = append(taskEntry, genTask("dot1dStpPortOperPointToPoint", dot1dStpPortOperPointToPoint))
 	taskEntry = append(taskEntry, genTask("dot1dStpPortAdminPathCost", dot1dStpPortAdminPathCost))
 
 	// // no definition yet
