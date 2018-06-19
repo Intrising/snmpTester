@@ -273,12 +273,12 @@ const (
 	dot1dStpTxHoldCount = mib2Prefix + "17.2.17@i-s"
 	// dot1dStpExtPortTable (17.2.19)
 	// dot1dStpExtPortEntry (not-accessible)(17.2.19.1)
-	dot1dStpPortProtocolMigration = mib2Prefix + "17.2.19.1.1@i-s-w"
-	dot1dStpPortAdminEdgePort     = mib2Prefix + "17.2.19.1.2@i-s-w"
+	dot1dStpPortProtocolMigration = mib2Prefix + "17.2.19.1.1@i-w-s"
+	dot1dStpPortAdminEdgePort     = mib2Prefix + "17.2.19.1.2@i-w-s"
 	dot1dStpPortOperEdgePort      = mib2Prefix + "17.2.19.1.3@i-w"
-	dot1dStpPortAdminPointToPoint = mib2Prefix + "17.2.19.1.4@i-s-w"
+	dot1dStpPortAdminPointToPoint = mib2Prefix + "17.2.19.1.4@i-w-s"
 	dot1dStpPortOperPointToPoint  = mib2Prefix + "17.2.19.1.5@i-w"
-	dot1dStpPortAdminPathCost     = mib2Prefix + "17.2.19.1.6@i-s-w"
+	dot1dStpPortAdminPathCost     = mib2Prefix + "17.2.19.1.6@i-w-s"
 
 	// Following 2 don't have the data type in rfc4318 yet
 	rstpNotifications = mib2Prefix + "134.0@i"
@@ -292,6 +292,157 @@ const (
 	// rstpCompliances (134.2.2)
 	rstpCompliance = mib2Prefix + "134.2.2.1@i"
 	// ************** rfc4318 **************
+
+	// ************** rfc3812 **************
+	mplsTunnelConfigured          = mib2Prefix + "10.166.3.1.1@i"
+	mplsTunnelActive              = mib2Prefix + "10.166.3.1.2@i"
+	mplsTunnelTEDistProto         = mib2Prefix + "10.166.3.1.3@i"
+	mplsTunnelMaxHops             = mib2Prefix + "10.166.3.1.4@i"
+	mplsTunnelNotificationMaxRate = mib2Prefix + "10.166.3.1.5@i-s"
+
+	mplsTunnelIndexNext = mib2Prefix + "10.166.3.2.1@i"
+	// mplsTunnelTable (10.166.3.2.2)
+	// mplsTunnelEntry (not-accessible)(10.166.3.2.2.1)
+	mplsTunnelName               = mib2Prefix + "10.166.3.2.2.1.5@s-s-m:4"
+	mplsTunnelDescr              = mib2Prefix + "10.166.3.2.2.1.6@s-s-m:4"
+	mplsTunnelIsIf               = mib2Prefix + "10.166.3.2.2.1.7@i-s"
+	mplsTunnelIfIndex            = mib2Prefix + "10.166.3.2.2.1.8@i-s"
+	mplsTunnelOwner              = mib2Prefix + "10.166.3.2.2.1.9@i"
+	mplsTunnelRole               = mib2Prefix + "10.166.3.2.2.1.10@i-s"
+	mplsTunnelXCPointer          = mib2Prefix + "10.166.3.2.2.1.11@s-s-m:4"
+	mplsTunnelSignallingProto    = mib2Prefix + "10.166.3.2.2.1.12@i-s"
+	mplsTunnelSetupPrio          = mib2Prefix + "10.166.3.2.2.1.13@i-s"
+	mplsTunnelHoldingPrio        = mib2Prefix + "10.166.3.2.2.1.14@i-s"
+	mplsTunnelSessionAttributes  = mib2Prefix + "10.166.3.2.2.1.15@i-s"
+	mplsTunnelLocalProtectInUse  = mib2Prefix + "10.166.3.2.2.1.16@i-s"
+	mplsTunnelResourcePointer    = mib2Prefix + "10.166.3.2.2.1.17@s-s-m:4"
+	mplsTunnelPrimaryInstance    = mib2Prefix + "10.166.3.2.2.1.18@i"
+	mplsTunnelInstancePriority   = mib2Prefix + "10.166.3.2.2.1.19@i-s"
+	mplsTunnelHopTableIndex      = mib2Prefix + "10.166.3.2.2.1.20@i-s"
+	mplsTunnelPathInUse          = mib2Prefix + "10.166.3.2.2.1.21@i-s"
+	mplsTunnelARHopTableIndex    = mib2Prefix + "10.166.3.2.2.1.22@i"
+	mplsTunnelCHopTableIndex     = mib2Prefix + "10.166.3.2.2.1.23@i"
+	mplsTunnelIncludeAnyAffinity = mib2Prefix + "10.166.3.2.2.1.24@i-s"
+	mplsTunnelIncludeAllAffinity = mib2Prefix + "10.166.3.2.2.1.25@i-s"
+	mplsTunnelExcludeAnyAffinity = mib2Prefix + "10.166.3.2.2.1.26@i-s"
+	mplsTunnelTotalUpTime        = mib2Prefix + "10.166.3.2.2.1.27@i"
+	mplsTunnelInstanceUpTime     = mib2Prefix + "10.166.3.2.2.1.28@i"
+	mplsTunnelPrimaryUpTime      = mib2Prefix + "10.166.3.2.2.1.29@i"
+	mplsTunnelPathChanges        = mib2Prefix + "10.166.3.2.2.1.30@i"
+	mplsTunnelLastPathChange     = mib2Prefix + "10.166.3.2.2.1.31@i"
+	mplsTunnelCreationTime       = mib2Prefix + "10.166.3.2.2.1.32@i"
+	mplsTunnelStateTransitions   = mib2Prefix + "10.166.3.2.2.1.33@i"
+	mplsTunnelAdminStatus        = mib2Prefix + "10.166.3.2.2.1.34@i-s"
+	mplsTunnelOperStatus         = mib2Prefix + "10.166.3.2.2.1.35@i"
+	mplsTunnelRowStatus          = mib2Prefix + "10.166.3.2.2.1.36@i-s"
+	mplsTunnelStorageType        = mib2Prefix + "10.166.3.2.2.1.37@i-s"
+
+	mplsTunnelHopListIndexNext = mib2Prefix + "10.166.3.2.3@i"
+	// mplsTunnelHopTable (10.166.3.2.4)
+	// mplsTunnelHopEntry (not-accessible)(10.166.3.2.4.1)
+	mplsTunnelHopAddrType       = mib2Prefix + "10.166.3.2.4.1.4@i-s"
+	mplsTunnelHopIPAddr         = mib2Prefix + "10.166.3.2.4.1.5@s-s-m:4"
+	mplsTunnelHopIPPrefixLen    = mib2Prefix + "10.166.3.2.4.1.6@i-s"
+	mplsTunnelHopAsNumber       = mib2Prefix + "10.166.3.2.4.1.7@s-s-m:4"
+	mplsTunnelHopAddrUnnum      = mib2Prefix + "10.166.3.2.4.1.8@s-s-m:4"
+	mplsTunnelHopLspID          = mib2Prefix + "10.166.3.2.4.1.9@s-s-m:4"
+	mplsTunnelHopType           = mib2Prefix + "10.166.3.2.4.1.10@i-s"
+	mplsTunnelHopInclude        = mib2Prefix + "10.166.3.2.4.1.11@i-s"
+	mplsTunnelHopPathOptionName = mib2Prefix + "10.166.3.2.4.1.12@s-s-m:4"
+	mplsTunnelHopEntryPathComp  = mib2Prefix + "10.166.3.2.4.1.13@i-s-m:4"
+	mplsTunnelHopRowStatus      = mib2Prefix + "10.166.3.2.4.1.14@i-s"
+	mplsTunnelHopStorageType    = mib2Prefix + "10.166.3.2.4.1.15@i-s"
+
+	mplsTunnelResourceIndexNext = mib2Prefix + "10.166.3.2.5@i"
+
+	// mplsTunnelResourceTable (not-accessible)(10.166.3.2.6.0)
+	// mplsTunnelResourceEntry (not-accessible)(10.166.3.2.6.1)
+	mplsTunnelResourceMaxRate       = mib2Prefix + "10.166.3.2.6.1.2@i-s"
+	mplsTunnelResourceMeanRate      = mib2Prefix + "10.166.3.2.6.1.3@i-s"
+	mplsTunnelResourceMaxBurstSize  = mib2Prefix + "10.166.3.2.6.1.4@i-s"
+	mplsTunnelResourceMeanBurstSize = mib2Prefix + "10.166.3.2.6.1.5@i-s"
+	mplsTunnelResourceExBurstSize   = mib2Prefix + "10.166.3.2.6.1.6@i-s"
+	mplsTunnelResourceFrequency     = mib2Prefix + "10.166.3.2.6.1.7@i-s"
+	mplsTunnelResourceWeight        = mib2Prefix + "10.166.3.2.6.1.8@i-s"
+	mplsTunnelResourceRowStatus     = mib2Prefix + "10.166.3.2.6.1.9@i-s"
+	mplsTunnelResourceStorageType   = mib2Prefix + "10.166.3.2.6.1.10@i-s"
+
+	// mplsTunnelARHopTable (not-accessible)(10.166.3.2.7)
+	// mplsTunnelARHopEntry (not-accessible)(10.166.3.2.7.1)
+	mplsTunnelARHopAddrType  = mib2Prefix + "10.166.3.2.7.1.3@i"
+	mplsTunnelARHopIPAddr    = mib2Prefix + "10.166.3.2.7.1.4@s-m:4"
+	mplsTunnelARHopAddrUnnum = mib2Prefix + "10.166.3.2.7.1.5@s-m:4"
+	mplsTunnelARHopLspID     = mib2Prefix + "10.166.3.2.7.1.6@s-m:4"
+
+	// mplsTunnelCHopTable (not-accessible)(10.166.3.2.8)
+	// mplsTunnelCHopEntry (not-accessible)(10.166.3.2.8.1)
+	mplsTunnelCHopAddrType    = mib2Prefix + "10.166.3.2.8.1.3@i"
+	mplsTunnelCHopIPAddr      = mib2Prefix + "10.166.3.2.8.1.4@s-m:4"
+	mplsTunnelCHopIPPrefixLen = mib2Prefix + "10.166.3.2.8.1.5@i"
+	mplsTunnelCHopAsNumber    = mib2Prefix + "10.166.3.2.8.1.6@s-m:4"
+	mplsTunnelCHopAddrUnnum   = mib2Prefix + "10.166.3.2.8.1.7@s-m:4"
+	mplsTunnelCHopLspID       = mib2Prefix + "10.166.3.2.8.1.8@s-m:4"
+	mplsTunnelCHopType        = mib2Prefix + "10.166.3.2.8.1.9@i"
+
+	// mplsTunnelPerfTable (not-accessible)(10.166.3.2.9.)
+	// mplsTunnelPerfEntry (not-accessible)(10.166.3.2.9.1)
+	mplsTunnelPerfPackets   = mib2Prefix + "10.166.3.2.9.1.1@i"
+	mplsTunnelPerfHCPackets = mib2Prefix + "10.166.3.2.9.1.2@i"
+	mplsTunnelPerfErrors    = mib2Prefix + "10.166.3.2.9.1.3@i"
+	mplsTunnelPerfBytes     = mib2Prefix + "10.166.3.2.9.1.4@i"
+	mplsTunnelPerfHCBytes   = mib2Prefix + "10.166.3.2.9.1.5@i"
+
+	// mplsTunnelCRLDPResTable (not-accessible)(10.166.3.2.10)
+	// mplsTunnelCRLDPResEntry (not-accessible)(10.166.3.2.10.1)
+	mplsTunnelCRLDPResMeanBurstSize = mib2Prefix + "10.166.3.2.10.1.1@i-s"
+	mplsTunnelCRLDPResExBurstSize   = mib2Prefix + "10.166.3.2.10.1.2@i-s"
+	mplsTunnelCRLDPResFrequency     = mib2Prefix + "10.166.3.2.10.1.3@i-s"
+	mplsTunnelCRLDPResWeight        = mib2Prefix + "10.166.3.2.10.1.4@i-s"
+	mplsTunnelCRLDPResFlags         = mib2Prefix + "10.166.3.2.10.1.5@i-s"
+	mplsTunnelCRLDPResRowStatus     = mib2Prefix + "10.166.3.2.10.1.6@i-s"
+	mplsTunnelCRLDPResStorageType   = mib2Prefix + "10.166.3.2.10.1.7@i-s"
+
+	mplsTunnelNotificationEnable = mib2Prefix + "10.166.3.2.11@i-s"
+	// ************** rfc3812 **************
+
+	// ************** rfc3814 **************
+	mplsFTNIndexNext        = mib2Prefix + "10.166.8.1.1@i"
+	mplsFTNTableLastChanged = mib2Prefix + "10.166.8.1.2@i"
+
+	// mplsFTNTable  (not-accessible)(10.166.8.1.3)
+	// mplsFTNEntry (not-accessible)(10.166.8.1.3.1)
+	mplsFTNRowStatus     = mib2Prefix + "10.166.8.1.3.1.2@i-s"
+	mplsFTNDescr         = mib2Prefix + "10.166.8.1.3.1.3@s-s-m:4"
+	mplsFTNMask          = mib2Prefix + "10.166.8.1.3.1.4@i-s"
+	mplsFTNAddrType      = mib2Prefix + "10.166.8.1.3.1.5@i-s"
+	mplsFTNSourceAddrMin = mib2Prefix + "10.166.8.1.3.1.6@s-s-m:4"
+	mplsFTNSourceAddrMax = mib2Prefix + "10.166.8.1.3.1.7@s-s-m:4"
+	mplsFTNDestAddrMin   = mib2Prefix + "10.166.8.1.3.1.8@s-s-m:4"
+	mplsFTNDestAddrMax   = mib2Prefix + "10.166.8.1.3.1.9@s-s-m:4"
+	mplsFTNSourcePortMin = mib2Prefix + "10.166.8.1.3.1.10@i-s"
+	mplsFTNSourcePortMax = mib2Prefix + "10.166.8.1.3.1.11@i-s"
+	mplsFTNDestPortMin   = mib2Prefix + "10.166.8.1.3.1.12@i-s"
+	mplsFTNDestPortMax   = mib2Prefix + "10.166.8.1.3.1.13@i-s"
+	mplsFTNProtocol      = mib2Prefix + "10.166.8.1.3.1.14@i-s"
+	mplsFTNDscp          = mib2Prefix + "10.166.8.1.3.1.15@i-s"
+	mplsFTNActionType    = mib2Prefix + "10.166.8.1.3.1.16@i-s"
+	mplsFTNActionPointer = mib2Prefix + "10.166.8.1.3.1.17@s-s-m:4"
+	mplsFTNStorageType   = mib2Prefix + "10.166.8.1.3.1.18@i-s"
+
+	mplsFTNMapTableLastChanged = mib2Prefix + "10.166.8.1.4@i"
+
+	// mplsFTNMapTable  (not-accessible)(10.166.8.1.5)
+	// mplsFTNMapEntry (not-accessible)(10.166.8.1.5.1)
+	mplsFTNMapRowStatus   = mib2Prefix + "10.166.8.1.5.1.4@i-s"
+	mplsFTNMapStorageType = mib2Prefix + "10.166.8.1.5.1.5@i-s"
+
+	// mplsFTNPerfTable (not-accessible)(10.166.8.1.6)
+	// MplsFTNPerfEntry (not-accessible)(10.166.8.1.6.1)
+	mplsFTNPerfMatchedPackets    = mib2Prefix + "10.166.8.1.6.1.3@i"
+	mplsFTNPerfMatchedOctets     = mib2Prefix + "10.166.8.1.6.1.4@i"
+	mplsFTNPerfDiscontinuityTime = mib2Prefix + "10.166.8.1.6.1.5@i"
+
+	// ************** rfc3814 **************
 
 	// ************** Private MIB *********************
 	// SYSTEM (1)
