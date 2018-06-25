@@ -44,6 +44,7 @@ const (
 	// ATTENTION: The type here is not the exact type in the MIB, but the type from snmpMIB program
 	// @s   means type string
 	// @i   means type integer
+	// @c   means type Counter32
 	// ATTENTION: The type here is not the exact type in the MIB, but the type from snmpMIB program
 	//
 	// -ps  means ps
@@ -51,6 +52,231 @@ const (
 	//                                  1 =>  need to set value to the device
 	//                                  2 =>  Spec issue
 	//                                  3 =>  snmp program issue
+	//                                  4 =>  Device not support
+
+	// ************** rfc2819 Begin **************
+	// etherStatsTable (16.1.1)
+	// etherStatsEntry (16.1.1.1)
+	etherStatsIndex                = mib2Prefix + "16.1.1.1.1@i-w"
+	etherStatsDataSource           = mib2Prefix + "16.1.1.1.2@s-w-s-m:4"
+	etherStatsDropEvents           = mib2Prefix + "16.1.1.1.3@i-w"
+	etherStatsOctets               = mib2Prefix + "16.1.1.1.4@i-w"
+	etherStatsPkts                 = mib2Prefix + "16.1.1.1.5@i-w"
+	etherStatsBroadcastPkts        = mib2Prefix + "16.1.1.1.6@i-w"
+	etherStatsMulticastPkts        = mib2Prefix + "16.1.1.1.7@i-w"
+	etherStatsCRCAlignErrors       = mib2Prefix + "16.1.1.1.8@i-w"
+	etherStatsUndersizePkts        = mib2Prefix + "16.1.1.1.9@i-w"
+	etherStatsOversizePkts         = mib2Prefix + "16.1.1.1.10@i-w"
+	etherStatsFragments            = mib2Prefix + "16.1.1.1.11@i-w"
+	etherStatsJabbers              = mib2Prefix + "16.1.1.1.12@i-w"
+	etherStatsCollisions           = mib2Prefix + "16.1.1.1.13@i-w"
+	etherStatsPkts64Octets         = mib2Prefix + "16.1.1.1.14@i-w"
+	etherStatsPkts65to127Octets    = mib2Prefix + "16.1.1.1.15@i-w"
+	etherStatsPkts128to255Octets   = mib2Prefix + "16.1.1.1.16@i-w"
+	etherStatsPkts256to511Octets   = mib2Prefix + "16.1.1.1.17@i-w"
+	etherStatsPkts512to1023Octets  = mib2Prefix + "16.1.1.1.18@i-w"
+	etherStatsPkts1024to1518Octets = mib2Prefix + "16.1.1.1.19@i-w"
+	etherStatsOwner                = mib2Prefix + "16.1.1.1.20@s-w-s"
+	etherStatsStatus               = mib2Prefix + "16.1.1.1.21@i-w-s"
+
+	// historyControlTable (16.2.1)
+	// historyControlEntry (16.2.1.1)
+	historyControlIndex            = mib2Prefix + "16.2.1.1.1@i-w"
+	historyControlDataSource       = mib2Prefix + "16.2.1.1.2@s-w-s-m:4"
+	historyControlBucketsRequested = mib2Prefix + "16.2.1.1.3@i-w-s"
+	historyControlBucketsGranted   = mib2Prefix + "16.2.1.1.4@i-w"
+	historyControlInterval         = mib2Prefix + "16.2.1.1.5@i-w-s"
+	historyControlOwner            = mib2Prefix + "16.2.1.1.6@s-w-s"
+	historyControlStatus           = mib2Prefix + "16.2.1.1.7@i-w-s"
+
+	// etherHistoryTable (16.2.2)
+	// etherHistoryEntry (16.2.2.1)
+	etherHistoryIndex          = mib2Prefix + "16.2.2.1.1@i-w"
+	etherHistorySampleIndex    = mib2Prefix + "16.2.2.1.2@i-w"
+	etherHistoryIntervalStart  = mib2Prefix + "16.2.2.1.3@i-w"
+	etherHistoryDropEvents     = mib2Prefix + "16.2.2.1.4@i-w"
+	etherHistoryOctets         = mib2Prefix + "16.2.2.1.5@i-w"
+	etherHistoryPkts           = mib2Prefix + "16.2.2.1.6@i-w"
+	etherHistoryBroadcastPkts  = mib2Prefix + "16.2.2.1.7@i-w"
+	etherHistoryMulticastPkts  = mib2Prefix + "16.2.2.1.8@i-w"
+	etherHistoryCRCAlignErrors = mib2Prefix + "16.2.2.1.9@i-w"
+	etherHistoryUndersizePkts  = mib2Prefix + "16.2.2.1.10@i-w"
+	etherHistoryOversizePkts   = mib2Prefix + "16.2.2.1.11@i-w"
+	etherHistoryFragments      = mib2Prefix + "16.2.2.1.12@i-w"
+	etherHistoryJabbers        = mib2Prefix + "16.2.2.1.13@i-w"
+	etherHistoryCollisions     = mib2Prefix + "16.2.2.1.14@i-w"
+	etherHistoryUtilization    = mib2Prefix + "16.2.2.1.15@i-w"
+
+	// alarmTable (16.3.1)
+	// alarmEntry (16.3.1.1)
+	alarmIndex             = mib2Prefix + "16.3.1.1.1@i-w-s"
+	alarmInterval          = mib2Prefix + "16.3.1.1.2@i-w-s"
+	alarmVariable          = mib2Prefix + "16.3.1.1.3@s-w-s-m:4"
+	alarmSampleType        = mib2Prefix + "16.3.1.1.4@i-w-s"
+	alarmValue             = mib2Prefix + "16.3.1.1.5@i-w"
+	alarmStartupAlarm      = mib2Prefix + "16.3.1.1.6@i-w-s"
+	alarmRisingThreshold   = mib2Prefix + "16.3.1.1.7@i-w-s"
+	alarmFallingThreshold  = mib2Prefix + "16.3.1.1.8@i-w-s"
+	alarmRisingEventIndex  = mib2Prefix + "16.3.1.1.9@i-w-s"
+	alarmFallingEventIndex = mib2Prefix + "16.3.1.1.10@i-w-s"
+	alarmOwner             = mib2Prefix + "16.3.1.1.11@s-w-s-m:4"
+	alarmStatus            = mib2Prefix + "16.3.1.1.12@i-w-s"
+
+	// hostControlTable (16.4.1)
+	// hostControlEntry (16.4.1.1)
+	hostControlIndex          = mib2Prefix + "16.4.1.1.1@i-w"
+	hostControlDataSource     = mib2Prefix + "16.4.1.1.2@s-w-s-m:4"
+	hostControlTableSize      = mib2Prefix + "16.4.1.1.3@i-w"
+	hostControlLastDeleteTime = mib2Prefix + "16.4.1.1.4@i-w"
+	hostControlOwner          = mib2Prefix + "16.4.1.1.5@s-w-s-m:4"
+	hostControlStatus         = mib2Prefix + "16.4.1.1.6@i-w-s"
+
+	// hostTable (16.4.2)
+	// hostEntry (16.4.2.1)
+	hostAddress          = mib2Prefix + "16.4.2.1.1@s-w-m:4"
+	hostCreationOrder    = mib2Prefix + "16.4.2.1.2@i-w"
+	hostIndex            = mib2Prefix + "16.4.2.1.3@i-w"
+	hostInPkts           = mib2Prefix + "16.4.2.1.4@i-w"
+	hostOutPkts          = mib2Prefix + "16.4.2.1.5@i-w"
+	hostInOctets         = mib2Prefix + "16.4.2.1.6@i-w"
+	hostOutOctets        = mib2Prefix + "16.4.2.1.7@i-w"
+	hostOutErrors        = mib2Prefix + "16.4.2.1.8@i-w"
+	hostOutBroadcastPkts = mib2Prefix + "16.4.2.1.9@i-w"
+	hostOutMulticastPkts = mib2Prefix + "16.4.2.1.10@i-w"
+
+	// hostTimeTable (16.4.3)
+	// hostTimeEntry (16.4.3.1)
+	hostTimeAddress          = mib2Prefix + "16.4.3.1.1@s-w-m:4"
+	hostTimeCreationOrder    = mib2Prefix + "16.4.3.1.2@i-w"
+	hostTimeIndex            = mib2Prefix + "16.4.3.1.3@i-w"
+	hostTimeInPkts           = mib2Prefix + "16.4.3.1.4@i-w"
+	hostTimeOutPkts          = mib2Prefix + "16.4.3.1.5@i-w"
+	hostTimeInOctets         = mib2Prefix + "16.4.3.1.6@i-w"
+	hostTimeOutOctets        = mib2Prefix + "16.4.3.1.7@i-w"
+	hostTimeOutErrors        = mib2Prefix + "16.4.3.1.8@i-w"
+	hostTimeOutBroadcastPkts = mib2Prefix + "16.4.3.1.9@i-w"
+	hostTimeOutMulticastPkts = mib2Prefix + "16.4.3.1.10@i-w"
+
+	// hostTopNControlTable (16.5.1)
+	// hostTopNControlEntry (16.5.1.1)
+	hostTopNControlIndex  = mib2Prefix + "16.5.1.1.1@i-w"
+	hostTopNHostIndex     = mib2Prefix + "16.5.1.1.2@i-w-s"
+	hostTopNRateBase      = mib2Prefix + "16.5.1.1.3@i-w-s"
+	hostTopNTimeRemaining = mib2Prefix + "16.5.1.1.4@i-w-s"
+	hostTopNDuration      = mib2Prefix + "16.5.1.1.5@i-w"
+	hostTopNRequestedSize = mib2Prefix + "16.5.1.1.6@i-w"
+	hostTopNGrantedSize   = mib2Prefix + "16.5.1.1.7@i-w"
+	hostTopNStartTime     = mib2Prefix + "16.5.1.1.8@i-w"
+	hostTopNOwner         = mib2Prefix + "16.5.1.1.9@s-w-s-m:4"
+	hostTopNStatus        = mib2Prefix + "16.5.1.1.10@i-w-s"
+
+	// hostTopNTable (16.5.2)
+	// hostTopNEntry (16.5.2.1)
+	hostTopNReport  = mib2Prefix + "16.5.2.1.1@i-w"
+	hostTopNIndex   = mib2Prefix + "16.5.2.1.2@i-w"
+	hostTopNAddress = mib2Prefix + "16.5.2.1.3@s-w-m:4"
+	hostTopNRate    = mib2Prefix + "16.5.2.1.4@i-w"
+
+	// matrixControlTable (16.6.1)
+	// matrixControlEntry (16.6.1.1)
+	matrixControlIndex          = mib2Prefix + "16.6.1.1.1@i-w"
+	matrixControlDataSource     = mib2Prefix + "16.6.1.1.2@s-w-m:4"
+	matrixControlTableSize      = mib2Prefix + "16.6.1.1.3@i-w"
+	matrixControlLastDeleteTime = mib2Prefix + "16.6.1.1.4@i-w"
+	matrixControlOwner          = mib2Prefix + "16.6.1.1.5@s-w-m:4"
+	matrixControlStatus         = mib2Prefix + "16.6.1.1.6@i-w"
+
+	// matrixSDTable (16.6.2)
+	// matrixSDEntry (16.6.2.1)
+	matrixSDSourceAddress = mib2Prefix + "16.6.2.1.1@s-w-m:4"
+	matrixSDDestAddress   = mib2Prefix + "16.6.2.1.2@s-w-m:4"
+	matrixSDIndex         = mib2Prefix + "16.6.2.1.3@i-w"
+	matrixSDPkts          = mib2Prefix + "16.6.2.1.4@i-w"
+	matrixSDOctets        = mib2Prefix + "16.6.2.1.5@i-w"
+	matrixSDErrors        = mib2Prefix + "16.6.2.1.6@i-w"
+
+	// matrixDSTable (16.6.3)
+	// matrixDSEntry (16.6.3.1)
+	matrixDSSourceAddress = mib2Prefix + "16.6.3.1.1@s-w-m:4"
+	matrixDSDestAddress   = mib2Prefix + "16.6.3.1.2@s-w-m:4"
+	matrixDSIndex         = mib2Prefix + "16.6.3.1.3@i-w"
+	matrixDSPkts          = mib2Prefix + "16.6.3.1.4@i-w"
+	matrixDSOctets        = mib2Prefix + "16.6.3.1.5@i-w"
+	matrixDSErrors        = mib2Prefix + "16.6.3.1.6@i-w"
+
+	// filterTable (16.7.1)
+	// filterEntry (16.7.1.1)
+	filterIndex            = mib2Prefix + "16.7.1.1.1@i-w"
+	filterChannelIndex     = mib2Prefix + "16.7.1.1.2@i-w-s"
+	filterPktDataOffset    = mib2Prefix + "16.7.1.1.3@i-w-s"
+	filterPktData          = mib2Prefix + "16.7.1.1.4@s-w-s-m:4"
+	filterPktDataMask      = mib2Prefix + "16.7.1.1.5@s-w-s-m:4"
+	filterPktDataNotMask   = mib2Prefix + "16.7.1.1.6@s-w-s-m:4"
+	filterPktStatus        = mib2Prefix + "16.7.1.1.7@i-w-s"
+	filterPktStatusMask    = mib2Prefix + "16.7.1.1.8@i-w-s"
+	filterPktStatusNotMask = mib2Prefix + "16.7.1.1.9@i-w-s"
+	filterOwner            = mib2Prefix + "16.7.1.1.10@s-w-s-m:4"
+	filterStatus           = mib2Prefix + "16.7.1.1.11@i-w-s"
+
+	// channelTable (16.7.2)
+	// channelEntry (16.7.2.1)
+	channelIndex             = mib2Prefix + "16.7.2.1.1@i-w"
+	channelIfIndex           = mib2Prefix + "16.7.2.1.2@i-w-s"
+	channelAcceptType        = mib2Prefix + "16.7.2.1.3@i-w-s"
+	channelDataControl       = mib2Prefix + "16.7.2.1.4@i-w-s"
+	channelTurnOnEventIndex  = mib2Prefix + "16.7.2.1.5@i-w-s"
+	channelTurnOffEventIndex = mib2Prefix + "16.7.2.1.6@i-w-s"
+	channelEventIndex        = mib2Prefix + "16.7.2.1.7@i-w-s"
+	channelEventStatus       = mib2Prefix + "16.7.2.1.8@i-w-s"
+	channelMatches           = mib2Prefix + "16.7.2.1.9@i-w"
+	channelDescription       = mib2Prefix + "16.7.2.1.10@s-w-s-m:4"
+	channelOwner             = mib2Prefix + "16.7.2.1.11@s-w-s-m:4"
+	channelStatus            = mib2Prefix + "16.7.2.1.12@i-w-s"
+
+	// bufferControlTable (16.8.1)
+	// bufferControlEntry (16.8.1.1)
+	bufferControlIndex              = mib2Prefix + "16.8.1.1.1@i-w"
+	bufferControlChannelIndex       = mib2Prefix + "16.8.1.1.2@i-w-s"
+	bufferControlFullStatus         = mib2Prefix + "16.8.1.1.3@i-w"
+	bufferControlFullAction         = mib2Prefix + "16.8.1.1.4@i-w-s"
+	bufferControlCaptureSliceSize   = mib2Prefix + "16.8.1.1.5@i-w-s"
+	bufferControlDownloadSliceSize  = mib2Prefix + "16.8.1.1.6@i-w-s"
+	bufferControlDownloadOffset     = mib2Prefix + "16.8.1.1.7@i-w-s"
+	bufferControlMaxOctetsRequested = mib2Prefix + "16.8.1.1.8@i-w-s"
+	bufferControlMaxOctetsGranted   = mib2Prefix + "16.8.1.1.9@i-w"
+	bufferControlCapturedPackets    = mib2Prefix + "16.8.1.1.10@i-w"
+	bufferControlTurnOnTime         = mib2Prefix + "16.8.1.1.11@i-w"
+	bufferControlOwner              = mib2Prefix + "16.8.1.1.12@s-w-s-m:4"
+	bufferControlStatus             = mib2Prefix + "16.8.1.1.13@i-w-s"
+
+	// captureBufferTable (16.8.2)
+	// captureBufferEntry (16.8.2.1)
+	captureBufferControlIndex = mib2Prefix + "16.8.2.1.1@i-w"
+	captureBufferIndex        = mib2Prefix + "16.8.2.1.2@i-w"
+	captureBufferPacketID     = mib2Prefix + "16.8.2.1.3@i-w"
+	captureBufferPacketData   = mib2Prefix + "16.8.2.1.4@s-w-m:4"
+	captureBufferPacketLength = mib2Prefix + "16.8.2.1.5@i-w"
+	captureBufferPacketTime   = mib2Prefix + "16.8.2.1.6@i-w"
+	captureBufferPacketStatus = mib2Prefix + "16.8.2.1.7@i-w"
+
+	// eventTable (16.9.1)
+	// eventEntry (16.9.1.1)
+	eventIndex        = mib2Prefix + "16.9.1.1.1@i-w"
+	eventDescription  = mib2Prefix + "16.9.1.1.2@s-w-s-m:4"
+	eventType         = mib2Prefix + "16.9.1.1.3@i-w-s"
+	eventCommunity    = mib2Prefix + "16.9.1.1.4@s-w-s-m:4"
+	eventLastTimeSent = mib2Prefix + "16.9.1.1.5@i-w"
+	eventOwner        = mib2Prefix + "16.9.1.1.6@s-w-s-m:4"
+	eventStatus       = mib2Prefix + "16.9.1.1.7@i-w-s"
+
+	// logTable (16.9.2)
+	// logEntry (16.9.2.1)
+	logEventIndex  = mib2Prefix + "16.9.2.1.1@i-w"
+	logIndex       = mib2Prefix + "16.9.2.1.2@i-w"
+	logTime        = mib2Prefix + "16.9.2.1.3@i-w"
+	logDescription = mib2Prefix + "16.9.2.1.4@s-w-m:4"
+
+	// ************** rfc2819 End **************
 
 	// ************** rfc4750 **************
 	// ospfGeneralGroup (14.1)
@@ -292,6 +518,106 @@ const (
 	// rstpCompliances (134.2.2)
 	rstpCompliance = mib2Prefix + "134.2.2.1@i"
 	// ************** rfc4318 **************
+
+	// ************** rfc3877 alarm mib **************
+
+	alarmModelLastChanged = mib2Prefix + "118.1.1.1@i"
+	// alarmModelTable (118.1.1.2)
+	// alarmModelEntry (118.1.1.2.1)
+	// alarmModelIndex           = mib2Prefix + "118.1.1.2.1.1@i-w" (not-accessible)
+	// alarmModelState           = mib2Prefix + "118.1.1.2.1.2@i-w" (not-accessible)
+	alarmModelNotificationID  = mib2Prefix + "118.1.1.2.1.3@s-w-s"
+	alarmModelVarbindIndex    = mib2Prefix + "118.1.1.2.1.4@i-w-s"
+	alarmModelVarbindValue    = mib2Prefix + "118.1.1.2.1.5@i-w-s"
+	alarmModelDescription     = mib2Prefix + "118.1.1.2.1.6@s-w-s"
+	alarmModelSpecificPointer = mib2Prefix + "118.1.1.2.1.7@s-w-s"
+	alarmModelVarbindSubtree  = mib2Prefix + "118.1.1.2.1.8@s-w-s"
+	alarmModelResourcePrefix  = mib2Prefix + "118.1.1.2.1.9@s-w-s"
+	alarmModelRowStatus       = mib2Prefix + "118.1.1.2.1.10@i-w-s"
+
+	alarmActiveLastChanged = mib2Prefix + "118.1.2.1@i"
+	// alarmActiveTable (118.1.2.2)
+	// alarmActiveEntry (118.1.2.2.1)
+	// alarmListName                = mib2Prefix + "118.1.2.2.1.1@s" (not-accessible)
+	// alarmActiveDateAndTime       = mib2Prefix + "118.1.2.2.1.2@i" (not-accessible)
+	// alarmActiveIndex             = mib2Prefix + "118.1.2.2.1.3@i" (not-accessible)
+	alarmActiveEngineID          = mib2Prefix + "118.1.2.2.1.4@s-w"
+	alarmActiveEngineAddressType = mib2Prefix + "118.1.2.2.1.5@i-w"
+	alarmActiveEngineAddress     = mib2Prefix + "118.1.2.2.1.6@s-w"
+	alarmActiveContextName       = mib2Prefix + "118.1.2.2.1.7@s-w"
+	alarmActiveVariables         = mib2Prefix + "118.1.2.2.1.8@i-w"
+	alarmActiveNotificationID    = mib2Prefix + "118.1.2.2.1.9@s-w"
+	alarmActiveResourceID        = mib2Prefix + "118.1.2.2.1.10@s-w"
+	alarmActiveDescription       = mib2Prefix + "118.1.2.2.1.11@s-w"
+	alarmActiveLogPointer        = mib2Prefix + "118.1.2.2.1.12@s-w"
+	alarmActiveModelPointer      = mib2Prefix + "118.1.2.2.1.13@s-w"
+	alarmActiveSpecificPointer   = mib2Prefix + "118.1.2.2.1.14@s-w"
+
+	// alarmActiveVariableTable (118.1.2.3)
+	// alarmActiveVariableEntry (118.1.2.3.1)
+	// alarmActiveVariableIndex          = mib2Prefix + "118.1.2.3.1.1@i" (not-accessible)
+	alarmActiveVariableID             = mib2Prefix + "118.1.2.3.1.2@s-w"
+	alarmActiveVariableValueType      = mib2Prefix + "118.1.2.3.1.3@i-w"
+	alarmActiveVariableCounter32Val   = mib2Prefix + "118.1.2.3.1.4@i-w"
+	alarmActiveVariableUnsigned32Val  = mib2Prefix + "118.1.2.3.1.5@i-w"
+	alarmActiveVariableTimeTicksVal   = mib2Prefix + "118.1.2.3.1.6@i-w"
+	alarmActiveVariableInteger32Val   = mib2Prefix + "118.1.2.3.1.7@i-w"
+	alarmActiveVariableOctetStringVal = mib2Prefix + "118.1.2.3.1.8@s-w"
+	alarmActiveVariableIPAddressVal   = mib2Prefix + "118.1.2.3.1.9@s-w"
+	alarmActiveVariableOidVal         = mib2Prefix + "118.1.2.3.1.10@s-w"
+	alarmActiveVariableCounter64Val   = mib2Prefix + "118.1.2.3.1.11@i-w"
+	alarmActiveVariableOpaqueVal      = mib2Prefix + "118.1.2.3.1.12@i-w"
+
+	// alarmActiveStatsTable (118.1.2.4)
+	// alarmActiveStatsEntry (118.1.2.4.1)
+	alarmActiveStatsActiveCurrent = mib2Prefix + "118.1.2.4.1.1@i-w"
+	alarmActiveStatsActives       = mib2Prefix + "118.1.2.4.1.2@i-w"
+	alarmActiveStatsLastRaise     = mib2Prefix + "118.1.2.4.1.3@i-w"
+	alarmActiveStatsLastClear     = mib2Prefix + "118.1.2.4.1.4@i-w"
+
+	alarmClearMaximum = mib2Prefix + "118.1.3.1@i-s"
+	// alarmClearTable (118.1.3.2)
+	// alarmClearEntry (118.1.3.2.1)
+	// alarmClearIndex             = mib2Prefix + "118.1.3.2.1.1@i" (not-accessible)
+	// alarmClearDateAndTime       = mib2Prefix + "118.1.3.2.1.2@i" (not-accessible)
+	alarmClearEngineID          = mib2Prefix + "118.1.3.2.1.3@s-w"
+	alarmClearEngineAddressType = mib2Prefix + "118.1.3.2.1.4@s-w"
+	alarmClearEngineAddress     = mib2Prefix + "118.1.3.2.1.5@s-w"
+	alarmClearContextName       = mib2Prefix + "118.1.3.2.1.6@s-w"
+	alarmClearNotificationID    = mib2Prefix + "118.1.3.2.1.7@s-w"
+	alarmClearResourceID        = mib2Prefix + "118.1.3.2.1.8@s-w"
+	alarmClearLogIndex          = mib2Prefix + "118.1.3.2.1.9@i-w"
+	alarmClearModelPointer      = mib2Prefix + "118.1.3.2.1.10@s-w"
+
+	// ituAlarmTable (121.1.1.1)
+	// ituAlarmEntry (121.1.1.1.1)
+	// ituAlarmPerceivedSeverity = mib2Prefix + "121.1.1.1.1.1@i" (not-accessible)
+	ituAlarmEventType      = mib2Prefix + "121.1.1.1.1.2@i-s-w"
+	ituAlarmProbableCause  = mib2Prefix + "121.1.1.1.1.3@i-s-w"
+	ituAlarmAdditionalText = mib2Prefix + "121.1.1.1.1.4@s-s-w"
+	ituAlarmGenericModel   = mib2Prefix + "121.1.1.1.1.5@s-s-w"
+
+	// ituAlarmActiveTable (121.1.2.1)
+	// ituAlarmActiveEntry (121.1.2.1.1)
+	ituAlarmActiveTrendIndication = mib2Prefix + "121.1.2.1.1.1@i-w"
+	ituAlarmActiveDetector        = mib2Prefix + "121.1.2.1.1.2@s-w"
+	ituAlarmActiveServiceProvider = mib2Prefix + "121.1.2.1.1.3@s-w"
+	ituAlarmActiveServiceUser     = mib2Prefix + "121.1.2.1.1.4@s-w"
+
+	// ituAlarmActiveStatsTable (121.1.2.2)
+	// ituAlarmActiveStatsEntry (121.1.2.2.1)
+	ituAlarmActiveStatsIndeterminateCurrent = mib2Prefix + "121.1.2.2.1.1@i-w"
+	ituAlarmActiveStatsCriticalCurrent      = mib2Prefix + "121.1.2.2.1.2@i-w"
+	ituAlarmActiveStatsMajorCurrent         = mib2Prefix + "121.1.2.2.1.3@i-w"
+	ituAlarmActiveStatsMinorCurrent         = mib2Prefix + "121.1.2.2.1.4@i-w"
+	ituAlarmActiveStatsWarningCurrent       = mib2Prefix + "121.1.2.2.1.5@i-w"
+	ituAlarmActiveStatsIndeterminates       = mib2Prefix + "121.1.2.2.1.6@i-w"
+	ituAlarmActiveStatsCriticals            = mib2Prefix + "121.1.2.2.1.7@i-w"
+	ituAlarmActiveStatsMajors               = mib2Prefix + "121.1.2.2.1.8@i-w"
+	ituAlarmActiveStatsMinors               = mib2Prefix + "121.1.2.2.1.9@i-w"
+	ituAlarmActiveStatsWarnings             = mib2Prefix + "121.1.2.2.1.10@i-w"
+
+	// ************** rfc3877 alarm mib **************
 
 	// ************** rfc3812 **************
 	mplsTunnelConfigured          = mib2Prefix + "10.166.3.1.1@i"
