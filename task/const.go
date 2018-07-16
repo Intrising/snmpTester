@@ -22,7 +22,7 @@ const (
 	snmpPrivateProtocol   = "-x DES "
 	snmpPrivatePassPhrase = "-X 123456789 "
 
-	deviceIP = "192.168.1.171 "
+	deviceIP = "192.168.1.172 "
 	// deviceIP = "192.168.15.10 "
 	// deviceIP = "192.168.16.140 "
 
@@ -32,7 +32,8 @@ const (
 	snmpSetTypeString = " string "
 	snmpSetTypeInt    = " integer "
 	snmpSetTypeIpaddr = " ipaddress "
-	privateMibOid     = "1.3.6.1.4.1.37072.302.2.3."
+	privateMibOid     = "1.3.6.1.4.1.37072.302.3.1."
+	oldPrivateMibOid  = "1.3.6.1.4.1.37072.302.2.3."
 	mib2Prefix        = "1.3.6.1.2.1."
 	rfc4318           = ""
 
@@ -772,11 +773,28 @@ const (
 
 	// ************** Private MIB *********************
 	// SYSTEM (1)
-	systemName           = privateMibOid + "1.1.0@s-s"
-	systemLocation       = privateMibOid + "1.2.0@s-s"
-	systemContact        = privateMibOid + "1.3.0@s-s"
-	systemDescr          = privateMibOid + "1.4.0@s-s"
-	systemFwVersion      = privateMibOid + "1.5.0@s"
+	systemName      = privateMibOid + "1.1.1@s"
+	systemDescr     = privateMibOid + "1.1.2@s-s"
+	systemLocation  = privateMibOid + "1.1.3@s-s"
+	systemContact   = privateMibOid + "1.1.4@s-s"
+	deviceTimeInfo  = privateMibOid + "1.2.1@s"
+	upTime          = privateMibOid + "1.2.2@i"
+	softwareVersion = privateMibOid + "1.2.3@s"
+	macAddressInfo  = privateMibOid + "1.2.4@s"
+	hardwareModel   = privateMibOid + "1.2.5@s"
+	hardwareDescr   = privateMibOid + "1.2.6@s"
+	serialNum       = privateMibOid + "1.2.7@s"
+
+	dhcpClientEnable = privateMibOid + "1.3.1@i-s"
+	devIPAddress     = privateMibOid + "1.3.2@s-s"
+	networkMask      = privateMibOid + "1.3.3@s-s"
+	gateway          = privateMibOid + "1.3.4@s"
+	dns              = privateMibOid + "1.3.5@s"
+	currentIPAddress = privateMibOid + "1.3.6@s"
+	currentNetmask   = privateMibOid + "1.3.7@s"
+	currentGateway   = privateMibOid + "1.3.8@s"
+	currentDNS       = privateMibOid + "1.3.9@s"
+
 	systemMacaddress     = privateMibOid + "1.6.0@s"
 	systemAutoLogoutTime = privateMibOid + "1.7.0@i-s"
 	systemSerialNum      = privateMibOid + "1.8.0@i"
