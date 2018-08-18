@@ -38,14 +38,15 @@ func (s *Stats) AddMarked() {
 // PrintStats asdf
 func PrintStats() {
 	fmt.Println("\n\n=================== Stats " + deviceIP + "=============================")
-	fmt.Println("Pass:       ", stats.pass)
-	fmt.Println("Failed:     ", stats.failed)
-	fmt.Println("Fail marked:", stats.marked)
+	fmt.Println("\n\n=================== Failed OIDs =============================")
 	if stats.marked != stats.failed {
 		for _, val := range stats.unmarkedOID {
 			fmt.Println(val)
 		}
 	}
+	fmt.Println("Pass:        ", stats.pass)
+	fmt.Println("Failed:      ", stats.failed)
+	fmt.Println("Fail marked: ", stats.marked)
 	fmt.Println("Total:      ", stats.total)
 }
 
